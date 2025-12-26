@@ -1,86 +1,90 @@
----
+Leftly 🍽️
 
-# Leftly 🍽️
+Leftly is a surplus food ordering web application built to reduce food waste in Sri Lanka while supporting sellers and customers in a smart and responsible way. The platform connects sellers with near-to-expiry (but safe) food to customers willing to purchase it at discounted prices, saving food, money, and the environment.
 
-**Leftly** is a surplus food ordering web application designed to **reduce food waste in Sri Lanka** while supporting both sellers and customers in a smart and responsible way. The platform connects sellers with near-to-expiry (but safe) food to customers willing to purchase it at discounted prices, helping save food, money, and the environment.
+Features
+Non-Registered Users
 
----
+Browse available surplus food
 
-## Features
+Add items to cart and place orders
 
-### Non-Registered Users
+Submit complaints easily without creating an account
 
-* Browse available surplus food
-* Add items to cart and place orders
-* Submit complaints easily without creating an account
+Registered Users
 
-### Registered Users
+Order food and track spending
 
-* Order food and track spending
-* View order history
-* Chat with sellers and follow favorite sellers
+View order history
 
-### Sellers
+Chat with sellers and follow favorite sellers
 
-* Add and manage products
-* View dashboards and analytics
-* Generate reports
-* Communicate with customers in real-time
-* Create **Mystery Boxes 🎁** to sell surplus creatively
+Sellers
 
-### Admin
+Add and manage products
 
-* Manage users, categories, complaints, and reviews
-* Monitor dashboards and generate reports
+View dashboards and analytics
 
----
+Generate reports
 
-## Tech Stack
+Communicate with customers in real-time
 
-* **Next.js** – Fast, SEO-friendly web application with server-side and client-side rendering
-* **TypeScript** – Adds type safety for reliable and maintainable code
-* **Zustand** – Global state management for authentication, cart, and user info
-* **Neon (PostgreSQL)** – Cloud database for storing users, products, orders, and analytics
-* **Prisma** – Simplifies database queries with type-safe ORM operations
-* **Express.js** – Backend APIs and business logic
-* **Socket.io** – Real-time features such as live chat and instant updates
+Create Mystery Boxes 🎁 to sell surplus creatively
 
-**Security:** JWT-based authentication, strong password validation, and protected APIs to ensure user data and transactions remain secure.
+Admin
 
----
+Manage users, categories, complaints, and reviews
 
-## Next Steps / Future Enhancements
+Monitor dashboards and generate reports
 
-* Integrate **AI-powered Smart Surplus Prediction & Spoilage Prevention** to reduce waste before it happens
-* Add **food donation features** so unsold food can be redirected to charities
+Tech Stack
 
----
+Next.js – Fast, SEO-friendly web app with server-side and client-side rendering
 
-## Getting Started
+TypeScript – Type safety for reliable and maintainable code
 
-1. **Clone the repository**
+Zustand – Global state management for cart, authentication, and user info
 
-```bash
+Neon (PostgreSQL) – Secure cloud database for users, products, orders, and analytics
+
+Prisma – Simplifies database queries with type-safe ORM operations
+
+Express.js – Backend APIs and business logic
+
+Socket.io – Real-time features like live chat and instant updates
+
+Security: JWT-based authentication, strong password validation, and protected APIs ensure safe user data and transactions.
+
+Next Steps / Future Enhancements
+
+Integrate AI-powered Smart Surplus Prediction & Spoilage Prevention to reduce waste before it happens
+
+Add food donation features so unsold food can be redirected to charities
+
+Getting Started
+
+Clone the repository
+
 git clone https://github.com/your-username/leftly.git
-```
 
-2. **Install dependencies**
 
-```bash
+Install dependencies
+
 npm install
-```
 
-3. **Configure environment variables**
-   Create a `.env` file with the following (example):
 
-```env
+Configure environment variables
+Create a .env file:
+
 DATABASE_URL=your_database_url
 JWT_SECRET=your_jwt_secret
 PORT=5000
-```
 
-4. **Run the application**
 
-```bash
+Run the application
+
 npm run dev
-```
+
+
+Open http://localhost:3000
+ to see the app in action.
