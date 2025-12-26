@@ -1,0 +1,624 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer{
+  id Int @id @default(autoincrement())
+  name String
+  email String @unique
+  location String 
+  mobileNumber String?
+  city String?
+  zipCode String?
+  cusProfileImg String?
+  password String
+  createdAt DateTime @default(now())
+
+  latitude Float?
+  longitude Float?
+
+  cart Cart?
+  orders Order[]
+  reviews Review[]
+  follow Follow[]
+  chatroom ChatRoom[]
+  userwarning UserWarning[]
+  cancelOrder OrderCancellation[]
+}
+
+model Seller{
+  seller_id Int @id @default(autoincrement())
+  businessName String @unique
+  businessEmail String @unique
+  businessAddress String
+  phoneNum String?
+  category String?
+  openingHours String?
+  deliveryRadius String?
+  website String?
+  storeDescription String?
+  storeImg String?
+  coverImg String?
+  password String
+  createdAt DateTime @default(now())
+
+  latitude Float?
+  longitude Float?
+
+  //products mean field name..That mean the total products seller has...and the Product[] mean array of products
+  //one to many relationship
+  products Product[]
+  orderItems OrderItem[]
+  reviews Review[]
+  follow Follow[]
+  chatroom ChatRoom[]
+  userwarning UserWarning[]
+  mysteryBox MysteryBox[]
+}
+
+model Product {
+  product_id     Int            @id @default(autoincrement())
+  productName    String 
+  productDescription String
+  category      String
+  price         String
+  discountPrice String
+  shelfTime     Int
+  stock         Int
+  sales         Int            @default(0)
+  // Remove: productImg String
+  createdAt     DateTime       @default(now())
+  // Add new fields
+  expiryDate    DateTime?      // Add expiry date
+  manufactureDate DateTime?    // Add manufacture date
+  ingredients   String?        // Add ingredients
+  
+  //foreign key
+  sellerId      Int
+
+  //relations
+  seller        Seller         @relation(fields: [sellerId], references: [seller_id])
+  images        ProductImage[] // Add images relation
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  reviews       Review[]
+}
+
+model ProductImage {
+  id          Int      @id @default(autoincrement())
+  imageUrl    String
+  createdAt   DateTime @default(now())
+  productId   Int
+  
+  product     Product  @relation(fields: [productId], references: [product_id])
+}
+
+model Cart {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  //foreign key
+  customerId Int @unique
+
+  //relations
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  cartItems CartItem[]
+
+}
+
+model CartItem{
+  id Int @id @default(autoincrement())
+  quantity Int
+  addedAt DateTime @default(now())
+
+  //foreign keys
+  cartId Int
+  productId Int
+
+  //relations
+  cart Cart @relation(fields: [cartId], references: [id])
+  product Product @relation(fields: [productId], references: [product_id])
+}
+
+model Order {
+  order_id         Int           @id @default(autoincrement())
+  orderNumber      String        @unique @default("") // Auto-generated order number
+  customerId       Int?          // Make optional for guests - ONLY DEFINE ONCE
+  guestSessionId   String?       // Add this for guest orders
+  guestEmail       String?       // Guest's email for notifications
+  guestName        String?       // Guest's name
+  guestPhone       String?       // Guest's phone number
+  totalAmount      Float
+  deliveryFee      Float
+  deliveryAddress  String        // Changed from Json to String
+  deliveryInfo     String?
+  deliveryTime     String        // Changed from Int to String
+  paymentMethod    PaymentMethod @default(DEBIT_CARD)
+  assignedRiderId  Int?
+  paymentStatus    PaymentStatus @default(PENDING) // Changed from PAID to PENDING
+  orderStatus      OrderStatus   @default(PLACED)
+  cancellationReason String?
+  cancelledAt      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  // Relations
+  customer         Customer?             @relation(fields: [customerId], references: [id])
+  orderItems       OrderItem[]
+  orderCancellations OrderCancellation[]
+  complaints Complaint[]
+}
+
+model OrderItem {
+  id         Int      @id @default(autoincrement())
+  quantity   Int
+  totalPrice Float    // Changed from Int to Float
+  createdAt  DateTime @default(now())
+  itemType    String    @default("REGULAR") // "REGULAR" or "MYSTERY_BOX"
+
+
+  // Foreign keys
+  orderId   Int
+  sellerId  Int
+  productId Int
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [order_id])
+  seller  Seller  @relation(fields: [sellerId], references: [seller_id])
+  product Product @relation(fields: [productId], references: [product_id])
+}
+
+model OrderCancellation {
+  id           Int       @id @default(autoincrement())
+  orderId      Int
+  customerId   Int?      // Made optional for guest orders
+  reason       String?
+  cancelledBy  String    // "CUSTOMER" or "SELLER"
+  refundStatus String?   // "PENDING", "PROCESSED", "NOT_APPLICABLE"
+  cancelledAt  DateTime  @default(now())
+  
+  // Relations
+  order    Order    @relation(fields: [orderId], references: [order_id])
+  customer Customer? @relation(fields: [customerId], references: [id]) // Made optional
+  
+  @@index([orderId])
+  @@index([customerId])
+}
+
+model Review{
+  reviewId Int @id @default(autoincrement())
+  rating Int?
+  message String
+  createdAt DateTime @default(now())
+
+  status ReviewStatus @default(PENDING)
+  moderatedBy Int?
+  moderatedAt DateTime?
+  moderationReason String?
+  
+  // Add relation to reports
+  reports Report[]
+  moderationlogs ModerationLog[]
+
+  //foreign keys
+  customerId Int
+  sellerId Int
+  productId Int
+
+  //relation
+  customer Customer @relation(fields: [customerId],references: [id])
+  seller Seller @relation(fields: [sellerId],references: [seller_id])
+  product Product @relation(fields: [productId],references: [product_id])
+}
+
+model Follow{
+  followId Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  //foreign keys
+  folowercusId Int 
+  foloweeselId Int
+
+  //relations
+  customer Customer @relation(fields: [folowercusId],references: [id])
+  seller Seller @relation(fields: [foloweeselId],references: [seller_id])
+}
+
+//container that holds the message between one seller and one customer
+model ChatRoom{
+  chatroomId Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  //foreign keys
+  customerId Int //customer that related to specific chatroom
+  sellerId Int   //seller that related to specific chatroom
+
+  //relations
+  customer Customer @relation(fields: [customerId],references: [id])
+  seller Seller @relation(fields: [sellerId],references: [seller_id])
+
+  message Message[]
+}
+
+//message that belong to chatroom
+//in here we dont use reciver because this has one to one flow..[cus and seller].so one has become sender then otherone should be receiver
+model Message{
+  messageId Int @id @default(autoincrement())
+  senderType SenderType
+  senderId Int
+  content String
+  createdAt DateTime @default(now())
+
+  //foreign key
+  chatroomId Int
+
+  //relation
+  chatroom ChatRoom @relation(fields: [chatroomId],references: [chatroomId])
+
+  readBy MessageReadBy[]
+}
+
+//Tracks which users have read a specific message.
+model MessageReadBy{
+  id Int @id @default(autoincrement())
+  userId Int
+  createdAt DateTime @default(now())
+
+  //foreign key
+  messageId Int
+
+  //relation
+  message Message @relation(fields: [messageId],references: [messageId])
+}
+
+model Category{
+  cId Int @id @default(autoincrement())
+  categoryName String
+  cDescription String?
+  cStatus CategoryStatus
+  icon String?
+  createdAt DateTime @default(now())
+}
+
+
+model Complaint {
+  id              Int      @id @default(autoincrement())
+  complaintCode   String   @unique @default(uuid())
+  title           String
+  description     String
+  complaintType   ComplaintType
+  priority        Priority @default(MEDIUM)
+  status          ComplaintStatus @default(PENDING)
+  
+  // Parties involved
+  complainantType ComplainantType
+  complainantId   Int
+  accusedType     AccusedType
+  accusedId       Int
+  
+  // Related order (optional)
+  orderId         Int?
+  
+  // Resolution details
+  resolution      String?
+  actionTaken     String?
+  resolvedAt      DateTime?
+  resolvedBy      Int? // Admin ID who resolved
+  followUpRequired Boolean @default(false)
+  followUpDate    DateTime?
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  admin           Admin?   @relation(fields: [resolvedBy], references: [id])
+  order           Order?   @relation(fields: [orderId], references: [order_id])
+  attachments     ComplaintAttachment[]
+  notes           ComplaintNote[]
+  statusHistory   ComplaintStatusHistory[]
+  
+  // Indexes
+  @@index([complainantType, complainantId])
+  @@index([accusedType, accusedId])
+  @@index([status])
+  @@index([priority])
+  @@index([complaintType])
+}
+
+model ComplaintAttachment {
+  id          Int      @id @default(autoincrement())
+  complaintId Int
+  fileUrl     String
+  fileName    String
+  fileType    String
+  createdAt   DateTime @default(now())
+  
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+}
+
+model ComplaintNote {
+  id          Int      @id @default(autoincrement())
+  complaintId Int
+  adminId     Int
+  note        String
+  isInternal  Boolean  @default(false) // Internal notes vs public updates
+  createdAt   DateTime @default(now())
+  
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+  admin       Admin     @relation(fields: [adminId], references: [id])
+}
+
+model ComplaintStatusHistory {
+  id          Int              @id @default(autoincrement())
+  complaintId Int
+  oldStatus   ComplaintStatus?
+  newStatus   ComplaintStatus
+  changedBy   Int              // Admin ID
+  note        String?
+  createdAt   DateTime         @default(now())
+  
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+  admin       Admin     @relation(fields: [changedBy], references: [id])
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  role      AdminRole @default(SUPPORT)
+  password  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  
+  // Relations
+  resolvedComplaints Complaint[]
+  complaintNotes     ComplaintNote[]
+  statusHistory      ComplaintStatusHistory[]
+}
+
+// Add to your existing Prisma schema:
+
+
+
+model Report {
+  reportId Int @id @default(autoincrement())
+  reviewId Int
+  reportType ReportType
+  reason String
+  reporterId Int? // Can be customer or seller
+  reportedAt DateTime @default(now())
+  status ReportStatus @default(PENDING)
+  resolvedBy Int?
+  resolvedAt DateTime?
+  resolutionReason String?
+  
+  // Relations
+  review Review @relation(fields: [reviewId], references: [reviewId])
+}
+
+model ModerationLog {
+  logId Int @id @default(autoincrement())
+  reviewId Int
+  action ModerationAction
+  reason String?
+  notes String?
+  moderatedBy Int
+  moderatedAt DateTime @default(now())
+  notifiedUser Boolean @default(false)
+  
+  // Relations
+  review Review @relation(fields: [reviewId], references: [reviewId])
+}
+
+model UserWarning {
+  warningId Int @id @default(autoincrement())
+  userId Int
+  warningType WarningType
+  message String
+  warnedBy Int
+  warnedAt DateTime @default(now())
+  notified Boolean @default(false)
+  suspended Boolean @default(false)
+  status WarningStatus @default(ACTIVE)
+  expiresAt DateTime?
+  
+  // Add userType field to distinguish between customer and seller
+  userType UserType @default(CUSTOMER)
+  
+  // Add unique constraint names using the `map` argument
+  customer Customer? @relation(fields: [userId], references: [id], map: "fk_customer_warning")
+  seller Seller? @relation(fields: [userId], references: [seller_id], map: "fk_seller_warning")
+}
+
+model MysteryBox {
+  id              Int         @id @default(autoincrement())
+  name            String      // e.g., "Baker's Surprise Box"
+  description     String      // Description visible to customers
+  price           Int         // Fixed price for the mystery box
+  discountPrice   Int?        // Discounted price if any
+  category        String?      // Food, Grocery, etc.
+  expireDate      DateTime
+  manufactureDate DateTime
+  status          MysteryBoxStatus @default(ACTIVE)
+  stock           Int         @default(0)
+  sales           Int         @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  // Foreign keys
+  sellerId        Int
+  
+  // Product IDs stored as JSON array (Prisma doesn't directly support arrays of integers)
+  // Format: [{"productId": 1, "quantity": 2}, {"productId": 2, "quantity": 1}]
+  productDetails  String      @db.Text
+  
+  // For seller to see - total value of all items in the box
+  totalValue      Int
+  
+  // Relations
+  seller          Seller      @relation(fields: [sellerId], references: [seller_id])
+  
+  // Index for better query performance
+  @@index([sellerId])
+  @@index([status])
+}
+
+
+
+// Add this enum
+enum MysteryBoxStatus {
+  ACTIVE
+  INACTIVE
+  SOLD_OUT
+  DRAFT
+}
+
+// Add this enum
+enum UserType {
+  CUSTOMER
+  SELLER
+}
+
+
+// Enums for new models
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DELETED
+}
+
+enum ReportType {
+  INAPPROPRIATE
+  FALSE_INFO
+  SPAM
+  CONFLICT_OF_INTEREST
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
+
+enum ModerationAction {
+  APPROVE
+  REJECT
+  DELETE
+  EDIT
+}
+
+enum WarningType {
+  CONTENT_VIOLATION
+  SPAM
+  ABUSE
+  FAKE_REVIEW
+  OTHER
+}
+
+enum WarningStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+enum ComplaintType {
+  ORDER_ISSUE
+  DELIVERY_PROBLEM
+  QUALITY_ISSUE
+  REFUND_REQUEST
+  SELLER_BEHAVIOR
+  CUSTOMER_BEHAVIOR
+  PAYMENT_ISSUE
+  ACCOUNT_ISSUE
+  PRODUCT_ISSUE
+  OTHER
+}
+
+enum ComplaintStatus {
+  PENDING
+  IN_REVIEW
+  IN_PROGRESS
+  ON_HOLD
+  RESOLVED
+  CLOSED
+  REJECTED
+  ESCALATED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ComplainantType {
+  CUSTOMER
+  SELLER
+}
+
+enum AccusedType {
+  CUSTOMER
+  SELLER
+  PLATFORM
+  DELIVERY_PARTNER
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  SUPPORT
+  MANAGER
+}
+
+
+enum PaymentStatus{
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum OrderStatus{
+  PLACED
+  PENDING
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod{
+  DEBIT_CARD
+  CASH_ON_DELIVERY
+}
+
+enum SenderType{
+  customer
+  seller
+}
+
+enum CategoryStatus{
+  ACTIVE
+  INACTIVE
+}
+
+
+
+
+
+
