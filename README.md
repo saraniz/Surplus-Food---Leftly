@@ -1,90 +1,94 @@
-Leftly 🍽️
 
-Leftly is a surplus food ordering web application built to reduce food waste in Sri Lanka while supporting sellers and customers in a smart and responsible way. The platform connects sellers with near-to-expiry (but safe) food to customers willing to purchase it at discounted prices, saving food, money, and the environment.
+---
 
-Features
-Non-Registered Users
+# Leftly 🍽️
 
-Browse available surplus food
+**Leftly** is a surplus food ordering web application built to **reduce food waste in Sri Lanka** while supporting sellers and customers in a smart and responsible way. The platform connects sellers with near-to-expiry (but safe) food to customers willing to purchase it at discounted prices, saving food, money, and the environment.
 
-Add items to cart and place orders
+---
 
-Submit complaints easily without creating an account
+## Features
 
-Registered Users
+### Non-Registered Users
 
-Order food and track spending
+* Browse available surplus food
+* Add items to cart and place orders
+* Submit complaints easily without creating an account
 
-View order history
+### Registered Users
 
-Chat with sellers and follow favorite sellers
+* Order food and track spending
+* View order history
+* Chat with sellers and follow favorite sellers
 
-Sellers
+### Sellers
 
-Add and manage products
+* Add and manage products
+* View dashboards and analytics
+* Generate reports
+* Communicate with customers in real-time
+* Create **Mystery Boxes 🎁** to sell surplus creatively
 
-View dashboards and analytics
+### Admin
 
-Generate reports
+* Manage users, categories, complaints, and reviews
+* Monitor dashboards and generate reports
 
-Communicate with customers in real-time
+---
 
-Create Mystery Boxes 🎁 to sell surplus creatively
+## Tech Stack
 
-Admin
+* **Next.js** – Fast, SEO-friendly web app with server-side and client-side rendering
+* **TypeScript** – Type safety for reliable and maintainable code
+* **Zustand** – Global state management for cart, authentication, and user info
+* **Neon (PostgreSQL)** – Secure cloud database for users, products, orders, and analytics
+* **Prisma** – Simplifies database queries with type-safe ORM operations
+* **Express.js** – Backend APIs and business logic
+* **Socket.io** – Real-time features like live chat and instant updates
 
-Manage users, categories, complaints, and reviews
+**Security:** JWT-based authentication, strong password validation, and protected APIs ensure safe user data and transactions.
 
-Monitor dashboards and generate reports
+---
 
-Tech Stack
+## Next Steps / Future Enhancements
 
-Next.js – Fast, SEO-friendly web app with server-side and client-side rendering
+* Integrate **AI-powered Smart Surplus Prediction & Spoilage Prevention** to reduce waste before it happens
+* Add **food donation features** so unsold food can be redirected to charities
 
-TypeScript – Type safety for reliable and maintainable code
+---
 
-Zustand – Global state management for cart, authentication, and user info
+## Getting Started
 
-Neon (PostgreSQL) – Secure cloud database for users, products, orders, and analytics
+1. **Clone the repository**
 
-Prisma – Simplifies database queries with type-safe ORM operations
-
-Express.js – Backend APIs and business logic
-
-Socket.io – Real-time features like live chat and instant updates
-
-Security: JWT-based authentication, strong password validation, and protected APIs ensure safe user data and transactions.
-
-Next Steps / Future Enhancements
-
-Integrate AI-powered Smart Surplus Prediction & Spoilage Prevention to reduce waste before it happens
-
-Add food donation features so unsold food can be redirected to charities
-
-Getting Started
-
-Clone the repository
-
+```bash
 git clone https://github.com/your-username/leftly.git
+```
 
+2. **Install dependencies**
 
-Install dependencies
-
+```bash
 npm install
+```
 
+3. **Configure environment variables**
+   Create a `.env` file:
 
-Configure environment variables
-Create a .env file:
-
+```env
 DATABASE_URL=your_database_url
 JWT_SECRET=your_jwt_secret
 PORT=5000
+```
 
+4. **Run the application**
 
-Run the application
-
+```bash
 npm run dev
+```
 
+## License
 
-Open http://localhost:3000
- to see the app in action.
+This project is licensed under the MIT License.
+
+---
+
