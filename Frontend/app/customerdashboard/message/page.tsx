@@ -231,7 +231,7 @@ export default function MessagesPage() {
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
       <CustomerSidebar />
       
-      <div className="flex-1 flex bg-white shadow-2xl mt-0 ml-0 overflow-hidden">
+      <div className="flex-1 flex bg-white shadow-2xl mt-0 ml-0 overflow-hidden text-black">
         {/* Debug button - remove in production */}
         <button 
           onClick={handleDebug}
@@ -242,7 +242,7 @@ export default function MessagesPage() {
         </button>
         
         {/* Conversations List */}
-        <div className="w-96 border-r border-gray-100 bg-white/80 backdrop-blur-sm flex flex-col">
+        <div className="w-96 border-r border-gray-100 bg-white/80 backdrop-blur-sm flex flex-col text-black">
           <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
             <h1 className="text-2xl font-bold mb-2">Messages</h1>
             <p className="text-blue-100 text-sm">Chat with food sellers</p>

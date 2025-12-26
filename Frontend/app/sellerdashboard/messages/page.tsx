@@ -197,7 +197,7 @@ export default function SellerMessagesPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-green-50/30">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-green-50/30 text-black">
       {/* Seller Sidebar */}
       <SellerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
@@ -209,7 +209,7 @@ export default function SellerMessagesPage() {
         ☰
       </button>
       
-      <div className="flex-1 flex bg-white shadow-2xl mt-0 ml-0 overflow-hidden">
+      <div className="flex-1 flex bg-white shadow-2xl mt-0 ml-0 overflow-hidden text-black">
         {/* Debug button - remove in production */}
         <button 
           onClick={handleDebug}
