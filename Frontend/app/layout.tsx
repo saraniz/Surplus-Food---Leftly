@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { alconica,geistMono,geistSans,lora } from "@/app/libs/fonts"
+import "leaflet/dist/leaflet.css";
+import Toast from "./components/toast";
 
 
 
@@ -17,6 +19,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${alconica.variable} ${lora.variable} antialiased`} //antialiased makes the font smoother(technique)
       >
         {children}
+        <Toast />
       </body>
     </html>
   );

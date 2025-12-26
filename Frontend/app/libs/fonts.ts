@@ -22,3 +22,5 @@ export const lora = Lora({
   variable: "--font-lora",  
   subsets: ["latin"],
 })
+
+
