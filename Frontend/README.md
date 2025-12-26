@@ -86,20 +86,5 @@ PORT=5000
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) to see the app in action.
-
----
-
-## Contribution
-
-Contributions, issues, and feature requests are welcome! Feel free to submit a pull request or open an issue.
-
----
-
-## License
-
-This project is licensed under the MIT License.
-
----
 
 
