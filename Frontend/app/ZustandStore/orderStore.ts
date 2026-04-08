@@ -48,7 +48,7 @@ interface OrderState {
 
 export const useOrderStore = create<OrderState>((set, get) => ({
   order: [],
-  token: localStorage.getItem("token"),
+  token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
   loading: false,
   error: null,
   success: false,
@@ -75,7 +75,11 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         deliveryTime: orderData.deliveryTime.toString(), // Ensure it's string
       };
 
-      const res = await api.post("/api/order/placeorder", validatedData, {
+      const endpoint = orderData.isGuest 
+        ? "/api/order/guest/placeorder" 
+        : "/api/order/placeorder";
+
+      const res = await api.post(endpoint, validatedData, {
         headers,
       });
 

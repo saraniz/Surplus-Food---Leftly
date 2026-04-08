@@ -27,7 +27,7 @@ interface FollowState {
 
 export const useFollowStore = create<FollowState>((set, get) => ({
   follow: [],
-  token: localStorage.getItem("token"),
+  token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
   loading: false,
   error: null,
 

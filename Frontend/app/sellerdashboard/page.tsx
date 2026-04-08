@@ -283,19 +283,31 @@ export default function SellerDashboard() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Use SellerHeader component instead of hardcoded header */}
-        <SellerHeader />
+        <SellerHeader 
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          title="Dashboard"
+          subtitle="Overview"
+        />
 
         {/* Dashboard Content */}
         <main className="flex-1 overflow-y-auto p-6">
           {/* Welcome Section - Dynamic based on seller name */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Welcome back, {greetingName}! 👋
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Here's what's happening with your store today.
-            </p>
+          <div className="mb-8 flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Welcome back, {greetingName}! 👋
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Here's what's happening with your store today.
+              </p>
+            </div>
+            <button 
+              onClick={() => window.location.href = '/sellerdashboard/charities'}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xl font-medium shadow-md transition-all flex items-center gap-2"
+            >
+              <span>❤️</span> Donate
+            </button>
           </div>
 
           {/* Stats Grid */}
@@ -390,7 +402,7 @@ export default function SellerDashboard() {
 
               <div className="space-y-4">
                 {recentOrders.length > 0 ? (
-                  recentOrders.map((orderItem) => (
+                  recentOrders.map((orderItem: any) => (
                     <div
                       key={orderItem.id}
                       className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors"

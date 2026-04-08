@@ -7,7 +7,7 @@ import { Request, Response, NextFunction } from "express"; //types that provide 
 interface MyJwtPayload extends JwtPayload {
   id: string;
   email: string;
-  role: "customer" | "seller" | "admin";
+  role: "customer" | "seller" | "admin" | "charity";
 }
 
 declare global {
@@ -71,6 +71,18 @@ const authenticate = async (
     } else if (decoded.role === "admin") {
       user = { id: "admin", email: process.env.ADMIN_EMAIL };
       req.user = { id: "admin", email: process.env.ADMIN_EMAIL, role: "admin" };
+    } else if (decoded.role === "charity") {
+      user = await prisma.charity.findUnique({
+        where: { id: Number(decoded.id) },
+        select: { id: true, email: true },
+      });
+      if (user) {
+        req.user = {
+          id: user.id,
+          email: user.email,
+          role: "charity",
+        };
+      }
     }
 
     if (!user) {

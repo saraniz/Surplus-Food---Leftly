@@ -3,6 +3,7 @@ import "./globals.css";
 import { alconica,geistMono,geistSans,lora } from "@/app/libs/fonts"
 import "leaflet/dist/leaflet.css";
 import Toast from "./components/toast";
+import { Toaster } from "react-hot-toast";
 
 
 
@@ -15,11 +16,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${alconica.variable} ${lora.variable} antialiased`} //antialiased makes the font smoother(technique)
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} ${alconica.variable} ${lora.variable} antialiased`}>
         {children}
         <Toast />
+        <Toaster position="top-right" />
       </body>
     </html>
   );

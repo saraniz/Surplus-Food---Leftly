@@ -29,7 +29,7 @@ interface CartState {
   pendingOperations: Set<number>;
   isFetching: boolean;
 
-  addToCart: (productId: number, quantity: number, productInfo?: any) => Promise<void>;
+  addToCart: (productId: number, quantity: number, productInfo?: any, isMysteryBox?: boolean) => Promise<void>;
   fetchCart: (options?: { silent?: boolean }) => Promise<void>;
   deleteCart: (productId: number) => Promise<void>;
   updateCartQuantity: (productId: number, quantity: number) => Promise<void>;
@@ -55,27 +55,19 @@ const validateToken = (token: string): boolean => {
 // Helper function to transform session cart items
 const transformSessionCartItems = (sessionItems: any[]) => {
   return sessionItems.map(item => {
-    const isMysteryBox = 
-      item.productId === 999999 || 
-      item.productName?.toLowerCase().includes("mystery") ||
-      item.productName?.toLowerCase().includes("surprise") ||
-      item.productName?.toLowerCase().includes("combo box") ||
-      item.productName?.toLowerCase().includes("saver box");
-
     return {
       id: item.id,
       productId: item.productId,
       quantity: item.quantity,
       product: {
         product_id: item.productId,
-        productName: item.productName || (isMysteryBox ? "Mystery Box" : "Product"),
-        name: item.productName || (isMysteryBox ? "Mystery Box" : "Product"),
+        productName: item.productName || "Product",
+        name: item.productName || "Product",
         price: item.productPrice || 0,
         discountPrice: item.productPrice || 0,
         productImg: item.productImage,
         images: item.productImage ? [{ imageUrl: item.productImage }] : [],
-        isMysteryBox: isMysteryBox,
-        ...(item.mysteryBoxId && { mysteryBoxId: item.mysteryBoxId })
+        isMysteryBox: item.isMysteryBox || false
       }
     };
   });
@@ -89,48 +81,13 @@ export const useCartState = create<CartState>((set, get) => ({
   pendingOperations: new Set<number>(),
   isFetching: false,
 
-  addToCart: async (productId, quantity, productInfo) => {
+  addToCart: async (productId, quantity, productInfo, isMysteryBox = false) => {
     try {
       console.log("=== START addToCart ===");
-      console.log("Parameters:", { productId, quantity, productInfo });
-      
-      // Detect if it's a mystery box
-      const isMysteryBox = 
-        productInfo?.isMysteryBox === true || 
-        productId === 999999 ||
-        productInfo?.name?.toLowerCase().includes("mystery") || 
-        productInfo?.name?.toLowerCase().includes("surprise") ||
-        productInfo?.name?.toLowerCase().includes("combo box") ||
-        productInfo?.name?.toLowerCase().includes("saver box");
-      
-      console.log("🔍 Mystery Box Detection:", {
-        isMysteryBox,
-        productId,
-        productName: productInfo?.name
-      });
+      console.log("Parameters:", { productId, quantity, productInfo, isMysteryBox });
       
       let finalProductId = productId;
       let finalProductInfo = productInfo || {};
-      
-      if (isMysteryBox) {
-        console.log("🎁 MYSTERY BOX DETECTED - Using ID 999999");
-        finalProductId = 999999;
-        
-        finalProductInfo = {
-          ...finalProductInfo,
-          name: finalProductInfo.name || "Mystery Box",
-          price: finalProductInfo.price || 299,
-          discountPrice: finalProductInfo.discountPrice || finalProductInfo.price || 299,
-          description: finalProductInfo.description || "A special mystery item!",
-          images: finalProductInfo.images || [{ 
-            imageUrl: "https://cdn.vectorstock.com/i/500p/04/67/mystery-prize-box-lucky-surprise-gift-vector-45060467.jpg"
-          }],
-          productImg: finalProductInfo.productImg || "https://cdn.vectorstock.com/i/500p/04/67/mystery-prize-box-lucky-surprise-gift-vector-45060467.jpg",
-          image: finalProductInfo.image || "https://cdn.vectorstock.com/i/500p/04/67/mystery-prize-box-lucky-surprise-gift-vector-45060467.jpg",
-          isMysteryBox: true,
-          ...(finalProductInfo.mysteryBoxId && { mysteryBoxId: finalProductInfo.mysteryBoxId })
-        };
-      }
       
       // Check if operation is already in progress
       const { pendingOperations } = get();
@@ -156,9 +113,8 @@ export const useCartState = create<CartState>((set, get) => ({
         image: finalProductInfo.images?.[0]?.imageUrl || 
               finalProductInfo.productImg || 
               finalProductInfo.image ||
-              "https://cdn.vectorstock.com/i/500p/04/67/mystery-prize-box-lucky-surprise-gift-vector-45060467.jpg",
-        isMysteryBox: isMysteryBox,
-        ...(finalProductInfo.mysteryBoxId && { mysteryBoxId: finalProductInfo.mysteryBoxId })
+              "https://placehold.co/200x200/e5e7eb/6b7280?text=No+Image",
+        isMysteryBox: isMysteryBox
       });
       
       // 2. Update local state immediately (for fast UI response)
@@ -211,7 +167,6 @@ export const useCartState = create<CartState>((set, get) => ({
               productId: finalProductId,
               quantity,
               isMysteryBox: isMysteryBox,
-              ...(finalProductInfo.mysteryBoxId && { mysteryBoxId: finalProductInfo.mysteryBoxId }),
               productInfo: finalProductInfo
             },
             { 

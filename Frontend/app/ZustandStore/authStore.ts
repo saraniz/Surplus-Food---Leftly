@@ -45,10 +45,22 @@ interface Seller {
   rating?: number;
 }
 
+// Structure of the charity
+interface Charity {
+  id: number;
+  name: string;
+  email: string;
+  location: string;
+  description?: string;
+  charityProfileImg?: string;
+  password?: string;
+}
+
 // Structure of the zustand store
 interface AuthState {
   customer: Customer | null;
   seller: Seller | null;
+  charity: Charity | null;
   token: string | null;
   loading: boolean;
   error: string | null;
@@ -73,6 +85,13 @@ interface AuthState {
     businessAddress: string,
     password: string
   ) => Promise<void>;
+  charityRegister: (
+    name: string,
+    location: string,
+    description: string,
+    email: string,
+    password: string
+  ) => Promise<void>;
   fetchSellerDetails: (id: number) => Promise<void>;
   fetchSellerDetailsProtected: (id: number) => Promise<void>;
   updateSellerDetails: (
@@ -84,6 +103,9 @@ interface AuthState {
   setSeller: (seller: Partial<Seller>) => void;
   fetchSellerDetailsFromToken: () => Promise<void>;
   
+  fetchCharityDetails: () => Promise<void>;
+  updateCharityDetails: (fields: Partial<Charity>, file?: File) => Promise<any>;
+  
   // Add getAllSellers function
   getAllSellers: () => Promise<void>;
 }
@@ -94,6 +116,7 @@ export const useCusAuthStore = create<AuthState>((set, get) => ({
   // Initial values
   customer: null,
   seller: null,
+  charity: null,
   sellers: [], // Initialize sellers array
   token: null, // Load token
   loading: false,
@@ -160,6 +183,34 @@ export const useCusAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
+  charityRegister: async (name, location, description, email, password) => {
+    try {
+      set({ loading: true, error: null });
+
+      const res = await api.post("/api/charity/register", {
+        name,
+        location,
+        description,
+        email,
+        password,
+      });
+
+      set({ token: res.data.token, loading: false });
+
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", "charity");
+      if (res.data.charity?.id) {
+        localStorage.setItem("charityId", res.data.charity.id.toString());
+      }
+    } catch (err: any) {
+      set({
+        error: err.response?.data?.message || "Charity registration failed",
+        loading: false,
+      });
+      throw err;
+    }
+  },
+
   login: async (email, password) => {
     console.log("Login attempt:", { email, password });
 
@@ -195,11 +246,23 @@ export const useCusAuthStore = create<AuthState>((set, get) => ({
         if (user.seller_id) {
           localStorage.setItem("sellerId", user.seller_id.toString());
         }
+      } else if (role === "charity") {
+        set({
+          charity: user,
+          customer: null,
+          seller: null,
+          token,
+          loading: false,
+        });
+        if (user.id) {
+          localStorage.setItem("charityId", user.id.toString());
+        }
       } else if (role === "admin") {
-        // For admin, clear both customer/seller and optionally store a minimal object
+        // For admin, clear both customer/seller/charity
         set({
           customer: null,
           seller: null,
+          charity: null,
           token,
           loading: false,
         });
@@ -484,10 +547,12 @@ updateSellerDetails: async (fields, storeImgFile, coverImgFile) => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("sellerId");
+    localStorage.removeItem("charityId");
     
     set({
       customer: null,
       seller: null,
+      charity: null,
       token: null,
       loading: false,
       error: null,
@@ -498,6 +563,59 @@ updateSellerDetails: async (fields, storeImgFile, coverImgFile) => {
     set((state) => ({
       seller: state.seller ? { ...state.seller, ...seller } : (seller as Seller),
     })),
+
+  fetchCharityDetails: async () => {
+    try {
+      set({ loading: true, error: null });
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found..Please log in");
+
+      const res = await api.get("/api/charity/getprofile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      set({ charity: res.data.charityD, loading: false });
+    } catch (err: any) {
+      set({
+        error: err.response?.data?.message || err.message || "Failed to fetch charity",
+        loading: false,
+      });
+    }
+  },
+
+  updateCharityDetails: async (fields, file) => {
+    try {
+      set({ loading: true, error: null });
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Please log in again..");
+
+      const formData = new FormData();
+      Object.entries(fields).forEach(([key, value]) => {
+        if (value !== undefined) {
+          formData.append(key, value === null ? "" : value.toString());
+        }
+      });
+
+      if (file) {
+        formData.append("charityProfileImg", file);
+      }
+
+      const res = await api.post("/api/charity/updateprofile", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const updatedCharity = res.data.updateCharity;
+      set({ charity: updatedCharity, loading: false });
+      return updatedCharity;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || "Failed to update charity detail";
+      set({ error: errorMessage, loading: false });
+      throw new Error(errorMessage);
+    }
+  },
 
   // Add getAllSellers function here
   getAllSellers: async () => {

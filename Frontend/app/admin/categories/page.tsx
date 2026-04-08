@@ -10,7 +10,7 @@ import { Edit, Trash2, Upload, X, Image as ImageIcon } from "lucide-react";
 interface Category {
   cId: number;
   categoryName: string;
-  cDescription: string;
+  cDescription?: string;
   cStatus: "ACTIVE" | "INACTIVE";
   icon?: string;
   iconUrl?: string;
@@ -107,7 +107,7 @@ export default function CategoriesPage() {
   const handleEdit = (cat: Category) => {
     setEditingCategoryId(cat.cId);
     setEditCategoryName(cat.categoryName);
-    setEditDescription(cat.cDescription);
+    setEditDescription(cat.cDescription || "");
     setEditStatus(cat.cStatus);
     setCurrentEditIconUrl(cat.iconUrl || "");
     setEditIconPreview(cat.iconUrl || "");

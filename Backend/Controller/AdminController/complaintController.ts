@@ -753,7 +753,7 @@ export const getComplaintAnalytics = async (req: Request, res: Response) => {
       const typeData = Object.entries(typeDistribution).map(([type, count]) => ({
         name: type,
         value: count,
-        percentage: (count / complaints.length) * 100,
+        percentage: ((count as number) / complaints.length) * 100,
       }));
 
       return res.status(200).json({
@@ -801,8 +801,8 @@ export const getComplaintAnalytics = async (req: Request, res: Response) => {
       // Convert to array format
       const timeline = Object.entries(timelineData).map(([type, data]) => ({
         type,
-        avgHours: parseFloat((data.totalHours / data.count).toFixed(2)),
-        count: data.count,
+        avgHours: parseFloat(((data as any).totalHours / (data as any).count).toFixed(2)),
+        count: (data as any).count,
       }));
 
       return res.status(200).json({

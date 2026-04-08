@@ -35,17 +35,10 @@ export default function ShopPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
   const [localFollowers, setLocalFollowers] = useState(0);
-  const [activeTab, setActiveTab] = useState("products"); // "products" or "mystery"
-  const [addingToCart, setAddingToCart] = useState<number | null>(null); // Track which box is being added
-  
-  // Get mystery boxes from store instead of local state
+  const [activeTab, setActiveTab] = useState("products");
   const { 
     products, 
-    fetchProducts, 
-    mysteryBoxes, 
-    mysteryBoxLoading, 
-    fetchMysteryBoxesBySeller,
-    clearMysteryBoxes 
+    fetchProducts
   } = useProductStore();
   
   const { customer, seller, fetchSellerDetails } = useCusAuthStore();
@@ -90,28 +83,7 @@ export default function ShopPage() {
     }
   }, [sellerId]);
 
-  // Load mystery boxes when tab changes or component mounts
-  useEffect(() => {
-    const loadMysteryBoxes = async () => {
-      if (!sellerId || isNaN(sellerId)) return;
-      
-      try {
-        await fetchMysteryBoxesBySeller(sellerId, {
-          status: 'ACTIVE'
-        });
-      } catch (error) {
-        console.error("Error loading mystery boxes:", error);
-      }
-    };
 
-    // Load mystery boxes immediately
-    loadMysteryBoxes();
-    
-    // Cleanup: Clear mystery boxes when component unmounts
-    return () => {
-      clearMysteryBoxes();
-    };
-  }, [sellerId]);
 
   useEffect(() => {
     if (seller?.followers !== undefined) {
@@ -166,74 +138,12 @@ export default function ShopPage() {
     }
   };
 
-  // Check if a mystery box is already in cart
-  const isMysteryBoxInCart = (box: any) => {
-    if (!cart?.cartItems) return false;
-    
-    // Since all mystery boxes use productId 999999, we need to check by mysteryBoxId
-    // or by name/description in the product info
-    return cart.cartItems.some(item => 
-      item.productId === 999999 && 
-      item.product?.name?.includes(box.name.substring(0, 20)) // Check partial name match
-    );
-  };
 
-  // Handle Mystery Box Add to Cart
-  const handleAddMysteryBoxToCart = async (box: any, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (addingToCart === box.id) return; // Prevent double click
-    
-    try {
-      setAddingToCart(box.id);
-      
-      console.log("Adding mystery box to cart:", box);
-      
-      // Prepare product info for cart
-      const productInfo = {
-        name: box.name,
-        price: box.discountPrice || box.price,
-        discountPrice: box.discountPrice || box.price,
-        description: box.description,
-        images: [],
-        productImg: "/images/mystery-box.jpg",
-        image: "/images/mystery-box.jpg",
-        isMysteryBox: true,
-        mysteryBoxId: box.id, // Store original ID for reference
-        sellerId: box.sellerId,
-        totalValue: box.totalValue,
-        totalItems: box.totalItems,
-        discountPercentage: box.discountPercentage
-      };
-      
-      // For mystery boxes, we use a special product ID or null
-      // The cart store will handle null productId specially for mystery boxes
-      await addToCart(
-        999999, // Special ID for all mystery boxes
-        1, // Quantity
-        productInfo
-      );
-      
-      // Refresh cart to show updated state
-      await fetchCart();
-      
-      // Show success message
-      showToast("Mystery box added to cart!", "success");
-      
-    } catch (error: any) {
-      console.error("Error adding mystery box to cart:", error);
-      showToast("Mystery box cannot added","error")
-    } finally {
-      setAddingToCart(null);
-    }
-  };
 
   const totalProducts = products?.length || 0;
   const totalFollowers = localFollowers || 0;
   const totalFollowing = 0;
   const shopRating = seller?.rating || 4.7;
-  const totalMysteryBoxes = mysteryBoxes.length;
 
   // Helper function to get product image
   const getProductImage = (product: any) => {
@@ -325,10 +235,7 @@ export default function ShopPage() {
                   <Package size={16} />
                   <span>{totalProducts} Products</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Gift size={16} />
-                  <span>{totalMysteryBoxes} Mystery Boxes</span>
-                </div>
+
                 <div className="flex items-center gap-2">
                   <Shield size={16} />
                   <span>Verified Seller</span>
@@ -404,15 +311,7 @@ export default function ShopPage() {
               <p className="text-gray-600 text-sm">Products</p>
             </div>
 
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Gift size={24} className="text-amber-600" />
-                <span className="text-3xl font-bold text-gray-900">
-                  {totalMysteryBoxes}
-                </span>
-              </div>
-              <p className="text-gray-600 text-sm">Mystery Boxes</p>
-            </div>
+
 
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
@@ -443,22 +342,7 @@ export default function ShopPage() {
                 <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>
               )}
             </button>
-            <button 
-              onClick={() => setActiveTab("mystery")}
-              className={`relative py-4 px-1 font-medium transition-colors ${
-                activeTab === "mystery" 
-                  ? "text-gray-900" 
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <Gift size={18} />
-                Mystery Box ({totalMysteryBoxes})
-              </span>
-              {activeTab === "mystery" && (
-                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-purple-600"></div>
-              )}
-            </button>
+
             <button 
               onClick={() => setActiveTab("reviews")}
               className={`py-4 px-1 font-medium transition-colors ${
@@ -610,214 +494,7 @@ export default function ShopPage() {
           </div>
         )}
 
-        {/* Mystery Boxes Grid */}
-        {activeTab === "mystery" && (
-          <div className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Mystery Boxes ({totalMysteryBoxes})
-                </h2>
-                <p className="text-gray-600 mt-1">
-                  Surprise packages with amazing value! Each box contains a curated selection of products from this store.
-                </p>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-500" />
-                <span className="text-sm text-gray-600">Limited Time Offers</span>
-              </div>
-            </div>
 
-            {mysteryBoxLoading ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading mystery boxes...</p>
-              </div>
-            ) : mysteryBoxes.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {mysteryBoxes.map((box: any) => {
-                  const isInCart = isMysteryBoxInCart(box);
-                  const isAdding = addingToCart === box.id;
-                  
-                  return (
-                    <div
-                      key={box.id}
-                      className="group"
-                    >
-                      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-200 overflow-hidden hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 group-hover:-translate-y-1">
-                        {/* Mystery Box Header */}
-                        <div className="relative p-6 bg-gradient-to-r from-purple-600 to-pink-600">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                                <Gift size={24} className="text-white" />
-                              </div>
-                              <div>
-                                <h3 className="font-bold text-white text-lg">
-                                  {box.name}
-                                </h3>
-                                <p className="text-purple-100 text-sm">
-                                  {box.totalItems || box.products?.length || 0} surprise items
-                                </p>
-                              </div>
-                            </div>
-                            
-                            {/* Discount Badge */}
-                            {box.discountPercentage > 0 && (
-                              <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                                {box.discountPercentage}% OFF
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Mystery Box Tag */}
-                          <div className="absolute -bottom-3 left-6">
-                            <span className="px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full shadow-lg">
-                              MYSTERY BOX
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Box Content */}
-                        <div className="p-6">
-                          {/* Value Information */}
-                          <div className="mb-4">
-                            
-                            
-                            {/* Savings */}
-                            {box.discountPrice && (
-                              <div className="flex items-center justify-between mb-3">
-                                <span className="text-gray-600 text-sm">You Pay</span>
-                                <div className="flex items-baseline gap-2">
-                                  <span className="text-2xl font-bold text-gray-900">
-                                    Rs.{box.discountPrice || box.price}
-                                  </span>
-                                  {box.price > box.discountPrice && (
-                                    <span className="text-sm text-gray-400 line-through">
-                                      Rs.{box.price}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* Savings Amount */}
-                            
-                          </div>
-
-                          {/* Box Description */}
-                          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                            {box.description || "A curated selection of premium products at an unbeatable price!"}
-                          </p>
-
-                          {/* Items Preview */}
-                          <div className="mb-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Box size={16} className="text-purple-600" />
-                              <span className="text-sm font-medium text-gray-700">Contains:</span>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {box.products && box.products.slice(0, 3).map((product: any, index: number) => (
-                                <div key={index} className="flex items-center gap-1 px-2 py-1 bg-white rounded-lg border border-gray-200">
-                                  <Package size={12} className="text-gray-500" />
-                                  <span className="text-xs text-gray-700">
-                                    {product.productName || `Item ${index + 1}`}
-                                  </span>
-                                  {product.quantity > 1 && (
-                                    <span className="text-xs text-gray-500 ml-1">
-                                      ×{product.quantity}
-                                    </span>
-                                  )}
-                                </div>
-                              ))}
-                              {box.products && box.products.length > 3 && (
-                                <div className="px-2 py-1 bg-gray-100 rounded-lg">
-                                  <span className="text-xs text-gray-500">
-                                    +{box.products.length - 3} more
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Stock and Sales Info */}
-                          <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                            <div className="flex items-center gap-2">
-                              <ShoppingBag size={14} />
-                              <span>{box.stock || 0} available</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Eye size={14} />
-                              <span>{box.sales || 0} sold</span>
-                            </div>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex flex-col gap-2">
-                            <button
-                              onClick={(e) => handleAddMysteryBoxToCart(box, e)}
-                              disabled={isAdding || isInCart || (box.stock || 0) <= 0}
-                              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all transform hover:scale-[1.02] ${
-                                isInCart
-                                  ? "bg-gradient-to-r from-emerald-500 to-green-500 text-white"
-                                  : isAdding
-                                  ? "bg-gradient-to-r from-purple-400 to-pink-400 text-white cursor-wait"
-                                  : (box.stock || 0) <= 0
-                                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                  : "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:shadow-purple-500/25"
-                              }`}
-                            >
-                              {isAdding ? (
-                                <>
-                                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                  Adding...
-                                </>
-                              ) : isInCart ? (
-                                <>
-                                  <CheckCircle size={18} />
-                                  Added to Cart
-                                </>
-                              ) : (box.stock || 0) <= 0 ? (
-                                "Out of Stock"
-                              ) : (
-                                <>
-                                  <ShoppingCart size={18} />
-                                  Add to Cart
-                                </>
-                              )}
-                            </button>
-                            
-                            
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                  <Gift size={48} className="text-purple-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                  No Mystery Boxes Yet
-                </h3>
-                <p className="text-gray-500 mb-4 max-w-md mx-auto">
-                  This shop hasn't created any mystery boxes yet. Check back later for surprise packages!
-                </p>
-                <button
-                  onClick={() => setActiveTab("products")}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-lg hover:shadow-purple-500/25 transition-all font-medium"
-                >
-                  <Package size={16} />
-                  Browse Products Instead
-                </button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

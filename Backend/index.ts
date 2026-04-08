@@ -15,6 +15,7 @@ import userRoute from './Routes/AdminRoutes/userRoute.js'
 import complaintRoute from './Routes/AdminRoutes/complaintRoute.js'
 import adminreviewRoute from './Routes/AdminRoutes/adminReviewRoute.js'
 import admincomplainRoute from './Routes/AdminRoutes/complaintRoute.js'
+import charityRoute from './Routes/charityRoute.js'
 import cors from 'cors'
 import chatSocket from './sockets/chatSocket.js'
 import { Server } from 'socket.io'
@@ -74,6 +75,7 @@ app.use("/api/user",userRoute)
 app.use("/api/complaints",complaintRoute)
 app.use("/api/adminreview",adminreviewRoute)
 app.use("/api/admincomplaint",admincomplainRoute)
+app.use("/api/charity",charityRoute)
 
 // Root route for testing
 app.get('/', (req, res) => {
@@ -83,3 +85,5 @@ app.get('/', (req, res) => {
         static_files: 'Access via /uploads/filename.jpg'
     });
 });
+
+// Restarting backend server after prisma connection fix

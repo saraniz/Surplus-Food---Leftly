@@ -1109,7 +1109,7 @@ export default function AnalyticsPage() {
                     <h4 className="font-medium text-gray-800">
                       {activeTab === "users" 
                         ? `${userMetrics.newCustomers + userMetrics.newSellers} New Users`
-                        : `${orderMetrics.newCustomers} New Customers (30d)`}
+                        : `${(orderMetrics as any).newCustomers || 0} New Customers (30d)`}
                     </h4>
                     <p className="text-sm text-gray-500 mt-1">
                       {activeTab === "users" 

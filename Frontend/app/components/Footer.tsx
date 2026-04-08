@@ -70,6 +70,9 @@ export default function Footer(){
                 <a href="/contactus" className="text-muted-foreground hover:text-accent transition-colors text-sm">
                   Contact
                 </a>
+                <a href="/register?role=charity" className="text-muted-foreground hover:text-accent transition-colors text-sm">
+                  Charity Register
+                </a>
                 {/* <a href="/support" className="text-muted-foreground hover:text-accent transition-colors text-sm">
                   Support
                 </a> */}

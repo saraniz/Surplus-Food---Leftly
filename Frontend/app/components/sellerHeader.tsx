@@ -26,7 +26,8 @@ export default function SellerHeader({
 
   useEffect(() => {
     const fetchSellerData = async () => {
-      if (token) {
+      const currentToken = token || localStorage.getItem("token");
+      if (currentToken) {
         const role = localStorage.getItem("role");
         if (role === "seller") {
           try {
@@ -46,12 +47,13 @@ export default function SellerHeader({
   const getSellerId = (): number | null => {
     if (seller?.seller_id) return seller.seller_id;
 
-    const storedSellerId = localStorage.getItem("seller_id");
+    const storedSellerId = localStorage.getItem("sellerId");
     if (storedSellerId) return parseInt(storedSellerId);
 
-    if (token) {
+    const currentToken = token || localStorage.getItem("token");
+    if (currentToken) {
       try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
+        const payload = JSON.parse(atob(currentToken.split(".")[1]));
         return payload.sellerId || payload.id || payload.seller_id;
       } catch (e) {
         console.error("Failed to decode token:", e);
@@ -65,7 +67,7 @@ export default function SellerHeader({
       await logout();
       localStorage.removeItem("token");
       localStorage.removeItem("role");
-      localStorage.removeItem("seller_id");
+      localStorage.removeItem("sellerId");
       router.push("/login");
     } catch (err) {
       console.error("Logout error:", err);

@@ -4,6 +4,7 @@ import { alconica } from "../libs/fonts";
 import { useState } from "react";
 import { useCusAuthStore } from "../ZustandStore/authStore";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 // Define the props interface
@@ -12,7 +13,9 @@ interface RegisterProps {
 }
 
 export default function Register({ onShowToast }: RegisterProps) {
-  const [userType, setUserType] = useState<"customer" | "seller">("customer");
+  const searchParams = useSearchParams();
+  const defaultRole = searchParams.get("role") === "charity" ? "charity" : "customer";
+  const [userType, setUserType] = useState<"customer" | "seller" | "charity">(defaultRole);
   const router = useRouter();
 
   const [cusName, setName] = useState("");
@@ -25,8 +28,14 @@ export default function Register({ onShowToast }: RegisterProps) {
   const [businessAddress, setBusinessAddress] = useState("");
   const [sellerPassword, setSellerPassword] = useState("");
   const [sellerConfirmPassword, setSellerConfirmPassword] = useState("");
+  const [charityName, setCharityName] = useState("");
+  const [charityLocation, setCharityLocation] = useState("");
+  const [charityDescription, setCharityDescription] = useState("");
+  const [charityEmail, setCharityEmail] = useState("");
+  const [charityPassword, setCharityPassword] = useState("");
+  const [charityConfirmPassword, setCharityConfirmPassword] = useState("");
 
-  const { register, sellerRegister, loading, error } = useCusAuthStore();
+  const { register, sellerRegister, charityRegister, loading, error } = useCusAuthStore();
   
   // Form validation states
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -86,6 +95,22 @@ export default function Register({ onShowToast }: RegisterProps) {
     return errors;
   };
 
+  const validateCharityForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!charityName.trim()) errors.charityName = "Charity name is required";
+    if (!charityLocation.trim()) errors.charityLocation = "Location is required";
+    if (!charityDescription.trim()) errors.charityDescription = "Description is required";
+    if (!charityEmail.trim()) errors.charityEmail = "Email is required";
+    else if (!isValidEmail(charityEmail)) errors.charityEmail = "Please enter a valid email";
+    if (!charityPassword) errors.charityPassword = "Password is required";
+    else if (!isStrongPassword(charityPassword).isValid) errors.charityPassword = "Password is not strong enough";
+    if (!charityConfirmPassword) errors.charityConfirmPassword = "Please confirm your password";
+    else if (charityPassword !== charityConfirmPassword) errors.charityConfirmPassword = "Passwords do not match";
+
+    return errors;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -93,9 +118,12 @@ export default function Register({ onShowToast }: RegisterProps) {
     setFormErrors({});
 
     // Validate form based on user type
-    const errors = userType === "customer" 
-      ? validateCustomerForm() 
-      : validateSellerForm();
+    const errors =
+      userType === "customer"
+        ? validateCustomerForm()
+        : userType === "seller"
+          ? validateSellerForm()
+          : validateCharityForm();
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -131,6 +159,24 @@ export default function Register({ onShowToast }: RegisterProps) {
         // Wait a bit before redirecting
         setTimeout(() => {
           router.push("/sellerdashboard");
+        }, 1500);
+      }
+
+      if (userType === "charity") {
+        await charityRegister(
+          charityName,
+          charityLocation,
+          charityDescription,
+          charityEmail,
+          charityPassword
+        );
+
+        if (onShowToast) {
+          onShowToast("Charity account created successfully! Redirecting...", "success");
+        }
+
+        setTimeout(() => {
+          router.push("/charitydashboard");
         }, 1500);
       }
     } catch (err: any) {
@@ -184,6 +230,19 @@ export default function Register({ onShowToast }: RegisterProps) {
           />
           <span className={`text-white group-hover:text-emerald-300 transition-colors ${userType === "seller" ? "font-semibold" : ""}`}>
             Seller
+          </span>
+        </label>
+
+        <label className="flex gap-2 items-center cursor-pointer group">
+          <input
+            type="radio"
+            value="charity"
+            checked={userType === "charity"}
+            onChange={() => setUserType("charity")}
+            className="text-emerald-500 focus:ring-emerald-400"
+          />
+          <span className={`text-white group-hover:text-emerald-300 transition-colors ${userType === "charity" ? "font-semibold" : ""}`}>
+            Charity
           </span>
         </label>
       </div>
@@ -441,6 +500,140 @@ export default function Register({ onShowToast }: RegisterProps) {
               {formErrors.sellerConfirmPassword ? (
                 <p className="text-rose-300 text-xs mt-1 ml-2">{formErrors.sellerConfirmPassword}</p>
               ) : sellerConfirmPassword && sellerPassword !== sellerConfirmPassword && (
+                <p className="text-rose-300 text-xs mt-1 ml-2">Passwords don't match</p>
+              )}
+            </div>
+          </div>
+        </form>
+      )}
+
+      {userType === "charity" && (
+        <form onSubmit={handleSubmit} className="space-y-4 flex flex-col items-center">
+          <div className="w-95">
+            <input
+              type="text"
+              placeholder="Charity Name"
+              value={charityName}
+              onChange={(e) => {
+                setCharityName(e.target.value);
+                if (formErrors.charityName) setFormErrors(prev => ({ ...prev, charityName: "" }));
+              }}
+              required
+              className={`w-full p-3 rounded-2xl bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white/30 transition-all ${
+                formErrors.charityName ? "ring-2 ring-rose-400" : ""
+              }`}
+            />
+            {formErrors.charityName && <p className="text-rose-300 text-xs mt-1 ml-2">{formErrors.charityName}</p>}
+          </div>
+
+          <div className="w-95">
+            <input
+              type="text"
+              placeholder="Location"
+              value={charityLocation}
+              onChange={(e) => {
+                setCharityLocation(e.target.value);
+                if (formErrors.charityLocation) setFormErrors(prev => ({ ...prev, charityLocation: "" }));
+              }}
+              required
+              className={`w-full p-3 rounded-2xl bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white/30 transition-all ${
+                formErrors.charityLocation ? "ring-2 ring-rose-400" : ""
+              }`}
+            />
+            {formErrors.charityLocation && <p className="text-rose-300 text-xs mt-1 ml-2">{formErrors.charityLocation}</p>}
+          </div>
+
+          <div className="w-95">
+            <textarea
+              placeholder="Charity Description"
+              value={charityDescription}
+              onChange={(e) => {
+                setCharityDescription(e.target.value);
+                if (formErrors.charityDescription) setFormErrors(prev => ({ ...prev, charityDescription: "" }));
+              }}
+              required
+              rows={3}
+              className={`w-full p-3 rounded-2xl bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white/30 transition-all ${
+                formErrors.charityDescription ? "ring-2 ring-rose-400" : ""
+              }`}
+            />
+            {formErrors.charityDescription && <p className="text-rose-300 text-xs mt-1 ml-2">{formErrors.charityDescription}</p>}
+          </div>
+
+          <div className="w-95">
+            <input
+              type="email"
+              placeholder="Charity Email"
+              value={charityEmail}
+              onChange={(e) => {
+                setCharityEmail(e.target.value);
+                if (formErrors.charityEmail) setFormErrors(prev => ({ ...prev, charityEmail: "" }));
+              }}
+              required
+              className={`w-full p-3 rounded-2xl bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white/30 transition-all ${
+                formErrors.charityEmail ? "ring-2 ring-rose-400" : ""
+              }`}
+            />
+            {formErrors.charityEmail ? (
+              <p className="text-rose-300 text-xs mt-1 ml-2">{formErrors.charityEmail}</p>
+            ) : charityEmail && !isValidEmail(charityEmail) && (
+              <p className="text-rose-300 text-xs mt-1 ml-2">Please enter a valid email</p>
+            )}
+          </div>
+
+          <div className="flex gap-4 w-95">
+            <div className="flex-1">
+              <input
+                type="password"
+                placeholder="Password"
+                value={charityPassword}
+                onChange={(e) => {
+                  setCharityPassword(e.target.value);
+                  if (formErrors.charityPassword) setFormErrors(prev => ({ ...prev, charityPassword: "" }));
+                }}
+                required
+                minLength={8}
+                className={`w-full p-3 rounded-2xl bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white/30 transition-all ${
+                  formErrors.charityPassword ? "ring-2 ring-rose-400" : ""
+                }`}
+              />
+              {formErrors.charityPassword ? (
+                <p className="text-rose-300 text-xs mt-1 ml-2">{formErrors.charityPassword}</p>
+              ) : charityPassword && (
+                <div className="text-xs mt-1 ml-2 space-y-1">
+                  <p className={isStrongPassword(charityPassword).requirements.minLength ? "text-emerald-300" : "text-amber-300"}>
+                    ✓ At least 8 characters
+                  </p>
+                  <p className={isStrongPassword(charityPassword).requirements.hasUpperCase ? "text-emerald-300" : "text-amber-300"}>
+                    ✓ At least one uppercase letter
+                  </p>
+                  <p className={isStrongPassword(charityPassword).requirements.hasLowerCase ? "text-emerald-300" : "text-amber-300"}>
+                    ✓ At least one lowercase letter
+                  </p>
+                  <p className={isStrongPassword(charityPassword).requirements.hasNumbers ? "text-emerald-300" : "text-amber-300"}>
+                    ✓ At least one number
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1">
+              <input
+                type="password"
+                placeholder="Confirm Password"
+                value={charityConfirmPassword}
+                onChange={(e) => {
+                  setCharityConfirmPassword(e.target.value);
+                  if (formErrors.charityConfirmPassword) setFormErrors(prev => ({ ...prev, charityConfirmPassword: "" }));
+                }}
+                required
+                className={`w-full p-3 rounded-2xl bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white/30 transition-all ${
+                  formErrors.charityConfirmPassword ? "ring-2 ring-rose-400" : ""
+                }`}
+              />
+              {formErrors.charityConfirmPassword ? (
+                <p className="text-rose-300 text-xs mt-1 ml-2">{formErrors.charityConfirmPassword}</p>
+              ) : charityConfirmPassword && charityPassword !== charityConfirmPassword && (
                 <p className="text-rose-300 text-xs mt-1 ml-2">Passwords don't match</p>
               )}
             </div>

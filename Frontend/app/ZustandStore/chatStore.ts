@@ -1,11 +1,13 @@
 import { create } from "zustand";
 import api from "../libs/api";
-import { io, type Socket } from "socket.io-client";
+import io from "socket.io-client";
+import toast from "react-hot-toast";
 
 export interface Chatroom {
     chatroomId: number;
-    customerId: number;
+    customerId?: number;
     sellerId: number;
+    charityId?: number;
     createdAt: string;
     seller?: {
         businessName?: string;
@@ -18,13 +20,19 @@ export interface Chatroom {
         location?: string;
         email?: string;
     };
+    charity?: {
+        name?: string;
+        charityProfileImg?: string;
+        location?: string;
+        email?: string;
+    };
 }
 
 export interface Message {
     messageId: number;
     chatroomId: number;
     senderId: number;
-    senderType: "customer" | "seller";
+    senderType: "customer" | "seller" | "charity";
     content: string;
     createdAt: string;
 }
@@ -33,7 +41,7 @@ interface ChatState {
     rooms: Chatroom[];
     messages: Message[];
     activeRoomId: number | null;
-    socket: Socket | null;
+    socket: any | null;
     token: string | null;
     loading: boolean;
     error: string | null;
@@ -41,7 +49,7 @@ interface ChatState {
 
     // actions
     connectSocket: () => void;
-    createRoom: (sellerId: number) => Promise<number>;
+    createRoom: (targetId: number, type?: 'seller' | 'charity') => Promise<number>;
     fetchRooms: () => Promise<void>;
     fetchMessages: (roomId: number) => Promise<void>;
     sendMessage: (roomId: number, content: string) => Promise<void>;
@@ -57,7 +65,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     messages: [],
     activeRoomId: null,
     socket: null,
-    token: localStorage.getItem("token"),
+    token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
     loading: false,
     error: null,
     isSocketConnected: false,
@@ -97,7 +105,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             }
         });
 
-        socket.on("connect_error", (err) => {
+        socket.on("connect_error", (err: any) => {
             console.error("❌ Socket connection error:", err.message);
             set({ 
                 error: `Cannot connect to chat server: ${err.message}`,
@@ -105,7 +113,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             });
         });
 
-        socket.on("disconnect", (reason) => {
+        socket.on("disconnect", (reason: any) => {
             console.log("Socket disconnected:", reason);
             set({ isSocketConnected: false });
             
@@ -118,13 +126,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         socket.on("new-message", (msg: Message) => {
             console.log("📨 New message received via socket:", msg);
-            const { activeRoomId, messages } = get();
+            const { activeRoomId, messages, rooms } = get();
 
             if (msg.chatroomId === activeRoomId) {
                 const messageExists = messages.some(m => m.messageId === msg.messageId);
                 if (!messageExists) {
                     set({
                         messages: [...messages, msg],
+                    });
+                }
+            } else {
+                // Show notification when receiving a message in a non-active room
+                const userRole = localStorage.getItem("role");
+                if (msg.senderType !== userRole) {
+                    const room = rooms.find(r => r.chatroomId === msg.chatroomId);
+                    const senderName = room?.seller?.businessName || room?.customer?.name || room?.charity?.name || "Someone";
+                    toast(`New message from ${senderName}`, {
+                        icon: '💬',
                     });
                 }
             }
@@ -144,7 +162,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             }
         });
 
-        socket.on("error", (error) => {
+        socket.on("error", (error: any) => {
             console.error("Socket error:", error);
             set({ error: `Socket error: ${error}` });
         });
@@ -155,9 +173,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     // -----------------------------------------
     // CREATE CHATROOM
     // -----------------------------------------
-    createRoom: async (sellerId) => {
+    createRoom: async (targetId, type = "seller") => {
         console.log("=== createRoom called ===");
-        console.log("Seller ID:", sellerId);
+        console.log("Target ID:", targetId, "Type:", type);
         
         try {
             set({ loading: true, error: null });
@@ -170,8 +188,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
             }
 
             console.log("Making API call to create chatroom...");
+            const payload = type === "charity" ? { charityId: targetId } : { sellerId: targetId };
             const res = await api.post("/api/chat/createchatroom", 
-                { sellerId },
+                payload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -284,12 +303,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 // Handle both id and chatroomId field names
                 const chatroomId = room.id || room.chatroomId;
                 
-                // For sellers, include customer data
+                // For sellers, include customer and charity data
                 if (userRole === "seller") {
                     return {
                         chatroomId: chatroomId,
                         customerId: room.customerId,
                         sellerId: room.sellerId,
+                        charityId: room.charityId,
                         createdAt: room.createdAt,
                         customer: room.customer ? {
                             name: room.customer.name,
@@ -297,8 +317,27 @@ export const useChatStore = create<ChatState>((set, get) => ({
                             location: room.customer.location,
                             email: room.customer.email
                         } : undefined,
+                        charity: room.charity ? {
+                            name: room.charity.name,
+                            charityProfileImg: room.charity.charityProfileImg,
+                            email: room.charity.email,
+                            location: room.charity.location
+                        } : undefined,
                         seller: room.seller // Include seller data if present
                     };
+                } else if (userRole === "charity") {
+                     return {
+                         chatroomId: chatroomId,
+                         customerId: room.customerId,
+                         sellerId: room.sellerId,
+                         charityId: room.charityId,
+                         createdAt: room.createdAt,
+                         seller: room.seller ? {
+                             businessName: room.seller.businessName,
+                             storeImg: room.seller.storeImg,
+                             category: room.seller.category
+                         } : undefined
+                     };
                 } else {
                     // For customers, include seller data
                     return {

@@ -319,7 +319,7 @@ export const deleteCart = async (req: Request, res: Response) => {
       },
     });
 
-    const transformedCart = updatedCart ? transformCartResponse(updatedCart) : null;
+    const transformedCart = updatedCart ? await transformCartResponseWithMysteryBoxes(updatedCart) : null;
 
     return res.status(200).json({
       cart: transformedCart,
@@ -485,7 +485,7 @@ export const bulkAddToCart = async (req: Request, res: Response) => {
       },
     });
 
-    const transformedCart = transformCartResponse(updatedCart);
+    const transformedCart = await transformCartResponseWithMysteryBoxes(updatedCart);
 
     return res.status(200).json({
       cart: transformedCart,

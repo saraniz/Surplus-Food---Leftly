@@ -420,47 +420,32 @@ export default function CheckoutPage() {
   }, [cart]);
 
   // Process cart items from authenticated user
- // In your processCartItems function, handle mystery boxes:
+// Process cart items from authenticated user
 const processCartItems = (cartItems: any[]) => {
   const grouped: Record<number, Shop> = {};
 
   cartItems.forEach((item: any, index: number) => {
-    console.log(`Processing cart item ${index}:`, item);
-    
-    // Check if it's a mystery box
-    const isMysteryBox = item.productType === "MYSTERY_BOX" || 
-                         item.product?.category === "MYSTERY_BOX" ||
-                         item.productId >= 100000; // Your mystery box ID range
     
     let sellerId = 0;
     let shopName = 'Unknown Shop';
     let sellerDetails = null;
 
-    if (isMysteryBox) {
-      // For mystery boxes, get seller from mystery box data
-      sellerId = item.mysteryBox?.sellerId || 
-                 item.sellerId || 
-                 1; // Default seller
-      shopName = item.mysteryBox?.seller?.businessName || "Mystery Box Shop";
-      sellerDetails = item.mysteryBox?.seller;
+    // For regular products
+    const seller = item.product?.seller || 
+                   item.seller || 
+                   item.sellerDetails ||
+                   null;
+    
+    if (seller) {
+      sellerId = parseInt(seller.seller_id || seller.id || '0');
+      shopName = seller.businessName || seller.name || `Shop ${sellerId}`;
+      sellerDetails = seller;
+    } else if (item.sellerId) {
+      sellerId = parseInt(item.sellerId);
+      shopName = item.shopName || `Shop ${sellerId}`;
     } else {
-      // For regular products
-      const seller = item.product?.seller || 
-                     item.seller || 
-                     item.sellerDetails ||
-                     null;
-      
-      if (seller) {
-        sellerId = parseInt(seller.seller_id || seller.id || '0');
-        shopName = seller.businessName || seller.name || `Shop ${sellerId}`;
-        sellerDetails = seller;
-      } else if (item.sellerId) {
-        sellerId = parseInt(item.sellerId);
-        shopName = item.shopName || `Shop ${sellerId}`;
-      } else {
-        sellerId = index + 1;
-        shopName = `Shop ${index + 1}`;
-      }
+      sellerId = index + 1;
+      shopName = `Shop ${index + 1}`;
     }
 
     // Get coordinates
@@ -473,7 +458,7 @@ const processCartItems = (cartItems: any[]) => {
     }
 
     // Get logo
-    const shopLogo = sellerDetails?.logo || sellerDetails?.profileImage || "🎁";
+    const shopLogo = sellerDetails?.logo || sellerDetails?.profileImage || "🏪";
 
     // Create or update shop
     if (!grouped[sellerId]) {
@@ -489,39 +474,26 @@ const processCartItems = (cartItems: any[]) => {
     }
 
     // Prepare item details
-    const productName = isMysteryBox 
-      ? (item.mysteryBox?.name || item.name || "Mystery Box")
-      : (item.product?.productName || item.name || "Unknown Product");
-    
-    const productDescription = isMysteryBox
-      ? (item.mysteryBox?.description || item.description || "Special surprise box!")
-      : (item.product?.description || item.description || "");
-    
-    const price = isMysteryBox
-      ? Number(item.mysteryBox?.price || item.mysteryBox?.discountPrice || item.price || 0)
-      : Number(item.product?.discountPrice || item.product?.price || item.price || 0);
-    
-    const originalPrice = isMysteryBox
-      ? Number(item.mysteryBox?.price || item.mysteryBox?.discountPrice || price)
-      : Number(item.product?.price || item.originalPrice || price);
+    const productName = item.product?.productName || item.name || "Unknown Product";
+    const productDescription = item.product?.description || item.description || "";
+    const price = Number(item.product?.discountPrice || item.product?.price || item.price || 0);
+    const originalPrice = Number(item.product?.price || item.originalPrice || price);
 
     // Get image
     const productImage = getValidImageUrl(
-      isMysteryBox
-        ? (item.mysteryBox?.image || "/images/mystery-box.jpg")
-        : (item.product?.productImgBase64 || 
-           item.product?.imageBase64 || 
-           item.product?.productImg || 
-           item.product?.images?.[0]?.imageBase64 ||
-           item.product?.images?.[0]?.imageUrl ||
-           item.image ||
-           item.productImage)
+      item.product?.productImgBase64 || 
+      item.product?.imageBase64 || 
+      item.product?.productImg || 
+      item.product?.images?.[0]?.imageBase64 ||
+      item.product?.images?.[0]?.imageUrl ||
+      item.image ||
+      item.productImage
     );
 
     // Create cart item
     const cartItem: CartItem = {
       id: item.id || index + 1,
-      productId: parseInt(item.productId || (isMysteryBox ? item.mysteryBoxId : item.product?.product_id) || (index + 1)),
+      productId: parseInt(item.productId || item.product?.product_id || (index + 1)),
       name: productName,
       description: productDescription,
       price: price,
@@ -530,16 +502,13 @@ const processCartItems = (cartItems: any[]) => {
       sellerId: sellerId,
       cartItemId: item.id || index + 1000,
       image: productImage,
-      product: item.product,
-      isMysteryBox: isMysteryBox, // Add flag for mystery box
-      mysteryBoxData: isMysteryBox ? item.mysteryBox : null,
-    };
+      product: item.product
+    } as any;
 
     grouped[sellerId].items.push(cartItem);
   });
 
   const shopsArray = Object.values(grouped);
-  console.log("Processed shops with mystery boxes:", shopsArray);
   setShops(shopsArray);
 };
 
@@ -953,7 +922,7 @@ const processCartItems = (cartItems: any[]) => {
       }
     }
     
-    setSelectedAddressFromMap(address);
+    setSelectedAddressFromMap(address || "");
     
     // Save temporary address details
     const city = "";
@@ -962,7 +931,7 @@ const processCartItems = (cartItems: any[]) => {
     const country = "Sri Lanka";
     
     setTempMapAddress({
-      address: address,
+      address: address || "",
       city: city,
       state: state,
       zipCode: zipCode,
@@ -1486,13 +1455,13 @@ const processCartItems = (cartItems: any[]) => {
     const orderData = {
       deliveryAddress: selectedAddress.address,
       deliveryInfo: deliveryInstructions,
-      deliveryTime: deliveryTime,
+      deliveryTime: deliveryTime.toString(),
       deliveryFee: Math.round(deliveryCalculations.totalDeliveryFee),
       totalPrice: totalPrice,
       paymentMethod: paymentMethodEnum,
       items: items,
       ...guestInfo,
-      isGuestOrder: !isLoggedIn,
+      isGuest: !isLoggedIn,
     };
 
     console.log("Order data being sent to backend:", orderData);
@@ -2254,16 +2223,7 @@ const processCartItems = (cartItems: any[]) => {
     <main className="min-h-screen bg-gradient-to-b from-[#FAF7F0] to-white text-black">
       <Navbar2 />
       
-      {/* Show guest form for unregistered users when no guest info */}
-      {showGuestForm && !isLoggedIn && (!guestUser.name || !guestUser.email || !guestUser.phone) && <GuestFormModal />}
-      
-      {/* Show method selection modal first if no address selected and guest info is complete */}
-      {showAddressModal && !selectedAddress && !addressMethod && 
-        (!isLoggedIn ? (guestUser.name && guestUser.email && guestUser.phone) : true) && 
-        <AddressMethodModal />}
-      
-      {/* Show address form if manual method selected */}
-      {showAddressForm && addressMethod === "manual" && <AddressFormModal />}
+      {/* Inline forms replaced modals */}
       
       {/* Show map picker if map method selected */}
       {showMapPicker && addressMethod === "map" && <MapPickerModal />}
@@ -2399,7 +2359,7 @@ const processCartItems = (cartItems: any[]) => {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-gray-700">
-                      Delivery Address
+                      Contact & Delivery Address
                     </h3>
                     <button
                       onClick={checkLocationAvailability}
@@ -2419,111 +2379,76 @@ const processCartItems = (cartItems: any[]) => {
                       )}
                     </button>
                   </div>
-                  <button
-                    onClick={() => {
-                      if (!isLoggedIn && (!guestUser.name || !guestUser.email || !guestUser.phone)) {
-                        setShowGuestForm(true);
-                      } else {
-                        setShowAddressModal(true);
-                      }
-                    }}
-                    className="text-amber-600 hover:text-amber-700 text-sm font-medium flex items-center"
-                  >
-                    <Edit2 size={14} className="mr-1" />
-                    {selectedAddress ? "Change" : "Add Address"}
-                  </button>
                 </div>
 
-                {/* Selected Address Display */}
-                {selectedAddress ? (
-                  <div className="border-2 rounded-xl p-4 transition-colors border-gray-200">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start flex-1">
-                        <div className="mr-3 mt-1">
-                          {getAddressIcon(selectedAddress.type)}
+                {/* Inline Address Form */}
+                <div className="border-2 rounded-xl p-5 transition-colors border-gray-200 bg-gray-50 shadow-sm">
+                  <div className="space-y-4">
+                    {!isLoggedIn && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                          <input type="text" value={guestUser.name} onChange={(e) => handleGuestFormChange("name", e.target.value)} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500" placeholder="John Doe" required />
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <div>
-                              <h4 className="font-medium text-gray-800">
-                                {selectedAddress.name}
-                              </h4>
-                              {selectedAddress.isDefault && (
-                                <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full">
-                                  Default
-                                </span>
-                              )}
-                            </div>
-                            <button
-                              onClick={() => handleEditAddress(selectedAddress)}
-                              className="p-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors ml-4"
-                              title="Edit address"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                          </div>
-                          {/* CLEAN ADDRESS DISPLAY - NO DUPLICATION */}
-                          <p className="text-gray-600 text-sm leading-relaxed">
-                            {formatSriLankaAddress(selectedAddress)}
-                          </p>
-                          <p className="text-gray-500 text-sm mt-2">
-                            📞 {selectedAddress.phone}
-                          </p>
-
-                          {/* Location Status */}
-                          {locationStatus && (
-                            <div
-                              className={`mt-3 p-2 rounded-lg flex items-start gap-2 ${
-                                locationStatus.type === "success"
-                                  ? "bg-green-50 text-green-700"
-                                  : locationStatus.type === "warning"
-                                  ? "bg-amber-50 text-amber-700"
-                                  : "bg-red-50 text-red-700"
-                              }`}
-                            >
-                              {isCheckingLocation ? (
-                                <Loader2 size={16} className="animate-spin mt-0.5" />
-                              ) : locationStatus.type === "success" ? (
-                                <Check size={16} className="mt-0.5" />
-                              ) : locationStatus.type === "warning" ? (
-                                <AlertCircle size={16} className="mt-0.5" />
-                              ) : (
-                                <XCircle size={16} className="mt-0.5" />
-                              )}
-                              <span className="text-sm">
-                                {locationStatus.message}
-                              </span>
-                            </div>
-                          )}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                          <input type="email" value={guestUser.email} onChange={(e) => handleGuestFormChange("email", e.target.value)} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500" placeholder="john@example.com" required />
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                        <input type="tel" value={isLoggedIn ? addressForm.phone : guestUser.phone} onChange={(e) => {
+                          handleAddressFormChange("phone", e.target.value);
+                          if (!isLoggedIn) handleGuestFormChange("phone", e.target.value);
+                        }} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500" placeholder="+94 77 123 4567" required />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Exact Address *</label>
+                        <div className="flex gap-2">
+                          <input type="text" value={addressForm.addressLine1} onChange={(e) => handleAddressFormChange("addressLine1", e.target.value)} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500" placeholder="Street address, building, house no." required />
+                          <button onClick={() => { setAddressMethod("map"); setShowMapPicker(true); }} className="px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 whitespace-nowrap font-medium flex items-center gap-1">
+                            <MapPin size={16} /> Map
+                          </button>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => {
-                      if (!isLoggedIn && (!guestUser.name || !guestUser.email || !guestUser.phone)) {
-                        setShowGuestForm(true);
-                      } else {
-                        setShowAddressModal(true);
-                      }
-                    }}
-                    className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-all"
-                  >
-                    <MapPin size={32} className="text-gray-400 mx-auto mb-3" />
-                    <h4 className="font-medium text-gray-800 mb-2">
-                      Add Delivery Address
-                    </h4>
-                    <p className="text-gray-600 text-sm">
-                      Click to enter your delivery address and phone number
-                    </p>
-                    {customer?.mobileNumber && (
-                      <p className="text-xs text-green-600 mt-2">
-                        Your phone number: {customer.mobileNumber}
-                      </p>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="col-span-1 border rounded-lg bg-white overflow-hidden flex">
+                        <input type="text" value={addressForm.city} onChange={(e) => handleAddressFormChange("city", e.target.value)} className="w-full px-3 py-2 outline-none" placeholder="City" required />
+                      </div>
+                      <div className="col-span-1 border rounded-lg bg-white overflow-hidden flex">
+                        <input type="text" value={addressForm.state} onChange={(e) => handleAddressFormChange("state", e.target.value)} className="w-full px-3 py-2 outline-none" placeholder="State (Optional)" />
+                      </div>
+                      <div className="col-span-1 border rounded-lg bg-white overflow-hidden flex">
+                        <input type="text" value={addressForm.zipCode} onChange={(e) => handleAddressFormChange("zipCode", e.target.value)} className="w-full px-3 py-2 outline-none" placeholder="ZIP" />
+                      </div>
+                      <div className="col-span-1 border rounded-lg bg-white overflow-hidden flex">
+                        <input type="text" value={addressForm.country} disabled className="w-full px-3 py-2 outline-none bg-gray-100" placeholder="Country" />
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 mt-2">
+                      <button onClick={handleSaveAddress} disabled={isSavingAddress || !(isLoggedIn ? addressForm.phone : guestUser.phone) || !addressForm.addressLine1 || (!isLoggedIn && (!guestUser.name || !guestUser.email))} className="px-6 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-medium disabled:opacity-50 flex items-center gap-2">
+                        {isSavingAddress ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} 
+                        Confirm Delivery Details
+                      </button>
+                    </div>
+
+                    {/* Location Status */}
+                    {locationStatus && selectedAddress && (
+                      <div className={`mt-3 p-3 rounded-lg flex items-start gap-2 ${
+                        locationStatus.type === "success" ? "bg-green-50 text-green-700" : locationStatus.type === "warning" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"
+                      }`}>
+                        {isCheckingLocation ? <Loader2 size={16} className="animate-spin mt-0.5" /> : locationStatus.type === "success" ? <Check size={16} className="mt-0.5" /> : locationStatus.type === "warning" ? <AlertCircle size={16} className="mt-0.5" /> : <XCircle size={16} className="mt-0.5" />}
+                        <span className="text-sm font-medium">{locationStatus.message}</span>
+                      </div>
                     )}
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Unavailable Items Warning */}

@@ -60,29 +60,13 @@ export default function CartPage() {
     loadCart();
   }, [fetchCart]);
 
-  // UPDATED: Improved image URL function that handles mystery boxes
+  // UPDATED: Improved image URL function
   const getImageUrl = (product: any): string => {
     if (!product) {
       return "https://placehold.co/200x200/e5e7eb/6b7280?text=No+Image";
     }
     
     console.log("DEBUG Product for image:", product);
-    
-    // SPECIAL HANDLING FOR MYSTERY BOXES
-    const isMysteryBox = 
-      product.isMysteryBox === true || 
-      product.productId === 999999 ||
-      product.product_id === 999999 ||
-      product.name?.includes("Mystery") ||
-      product.name?.includes("mystery") ||
-      product.productName?.includes("Mystery") ||
-      product.productName?.includes("mystery");
-    
-    if (isMysteryBox) {
-      console.log("🎁 Detected as Mystery Box, using default mystery box image");
-      // Use the same mystery box image from your mystery boxes page
-      return "https://cdn.vectorstock.com/i/500p/04/67/mystery-prize-box-lucky-surprise-gift-vector-45060467.jpg";
-    }
     
     // 1. Check for Base64 images first
     if (product.imageBase64 || product.productImgBase64) {
@@ -151,52 +135,6 @@ export default function CartPage() {
       console.log("🛒 Processing cart item:", item);
       console.log("📦 Product data:", product);
       
-      // Check if it's a mystery box
-      const isMysteryBox = 
-        product.isMysteryBox === true || 
-        item.productId === 999999 ||
-        product.product_id === 999999 ||
-        product.name?.includes("Mystery") ||
-        product.name?.includes("mystery") ||
-        product.productName?.includes("Mystery") ||
-        product.productName?.includes("mystery") ||
-        item.isMysteryBox === true;
-      
-      console.log("🎁 Is Mystery Box?", isMysteryBox);
-      
-      // For mystery boxes, ensure we have proper data
-      if (isMysteryBox) {
-        console.log("🎁 Processing mystery box item");
-        
-        // Use item data directly if product data is missing
-        const mysteryBoxData = {
-          name: product.name || 
-                product.productName || 
-                "Mystery Box",
-          price: Number(product.price || 
-                       product.discountPrice || 
-                       299),
-          description: product.description || 
-                      product.productDescription || 
-                      "A special mystery item!",
-          image: getImageUrl(product),
-          isMysteryBox: true
-        };
-        
-        console.log("🎁 Mystery box final data:", mysteryBoxData);
-        
-        return {
-          id: item.id || Date.now(),
-          productId: item.productId || 999999,
-          name: mysteryBoxData.name,
-          description: mysteryBoxData.description,
-          price: mysteryBoxData.price,
-          quantity: item.quantity || 1,
-          image: mysteryBoxData.image,
-          isMysteryBox: true
-        };
-      }
-      
       // For regular products
       const imageUrl = getImageUrl(product);
       
@@ -227,7 +165,7 @@ export default function CartPage() {
         price: price,
         quantity: item.quantity || 1,
         image: imageUrl,
-        isMysteryBox: false
+        isMysteryBox: item.isMysteryBox || product.isMysteryBox || false
       };
     }) || [];
 
@@ -244,7 +182,6 @@ export default function CartPage() {
         console.log(`Item ${index}:`, item);
         console.log(`Item ${index} product:`, item.product);
         console.log(`Item ${index} productId:`, item.productId);
-        console.log(`Item ${index} isMysteryBox:`, item.isMysteryBox || item.product?.isMysteryBox);
       });
     }
   }, [cart, cartItems]);
@@ -273,20 +210,9 @@ export default function CartPage() {
       
       if (quantityDifference === 0) return;
 
-      // For mystery boxes, we need to pass additional info
-      const isMysteryBox = currentItem.isMysteryBox;
       let productInfo = {};
       
-      if (isMysteryBox) {
-        productInfo = {
-          name: currentItem.name,
-          price: currentItem.price,
-          description: currentItem.description,
-          isMysteryBox: true
-        };
-      }
-      
-      await addToCart(productId, quantityDifference, productInfo);
+      await addToCart(productId, quantityDifference, productInfo, currentItem.isMysteryBox);
       await fetchCart();
       
       // Show success toast for quantity update
@@ -309,7 +235,7 @@ export default function CartPage() {
 
     setConfirmationDialog({
       show: true,
-      title: itemToRemove.isMysteryBox ? "Remove Mystery Box" : "Remove Item",
+      title: "Remove Item",
       message: `Are you sure you want to remove "${itemToRemove.name}" from your cart?`,
       itemToDelete: productId,
       actionType: "single",
@@ -372,15 +298,9 @@ export default function CartPage() {
   };
 
   // Image error handler
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>, itemName: string, isMysteryBox: boolean, product: any) => {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>, itemName: string, product: any) => {
     const img = e.currentTarget;
     console.log(`Image failed to load for: ${itemName}`);
-    
-    // For mystery boxes, use the default mystery box image
-    if (isMysteryBox) {
-      img.src = "https://cdn.vectorstock.com/i/500p/04/67/mystery-prize-box-lucky-surprise-gift-vector-45060467.jpg";
-      return;
-    }
     
     // For regular products, try fallbacks
     let newSrc = null;
@@ -577,7 +497,6 @@ export default function CartPage() {
                 {cartItems.map((item, index) => {
                   // Get the product data for this item
                   const product = cart?.cartItems?.[index]?.product;
-                  const isMysteryBox = item.isMysteryBox || product?.isMysteryBox;
                   
                   return (
                     <div
@@ -587,18 +506,11 @@ export default function CartPage() {
                       <div className="p-6 flex flex-col sm:flex-row gap-4">
                         <div className="flex-shrink-0 relative">
                           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
-                            {isMysteryBox && (
-                              <div className="absolute top-1 left-1 z-10">
-                                <span className="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-                                  MYSTERY
-                                </span>
-                              </div>
-                            )}
                             <img
                               src={item.image}
                               alt={item.name}
                               className="w-full h-full object-cover"
-                              onError={(e) => handleImageError(e, item.name, isMysteryBox || false, product)}
+                              onError={(e) => handleImageError(e, item.name, product)}
                               loading="lazy"
                             />
                           </div>
@@ -612,14 +524,14 @@ export default function CartPage() {
                         <div className="flex-grow">
                           <div className="flex items-start justify-between">
                             <div>
-                              <h3 className="text-lg font-medium text-gray-900">
+                              <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
                                 {item.name}
-                                {isMysteryBox && (
-                                  <span className="ml-2 text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
-                                    Mystery Box
+                                {item.isMysteryBox && (
+                                  <span className="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full font-semibold">
+                                    🎁 Mystery Box
                                   </span>
                                 )}
-                              </h3>
+                                </h3>
                               <p className="text-gray-600 text-sm mt-1 line-clamp-2">
                                 {item.description}
                               </p>

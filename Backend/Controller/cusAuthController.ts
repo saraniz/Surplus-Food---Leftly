@@ -84,48 +84,51 @@ export const customerLogin = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     console.log("Login request received:", email, password);
 
-    let user:
-      | (Customer & { role: 'customer' })
-      | (Seller & { role: 'seller' })
-      | { role: 'admin'; email: string }
-      | null = null;
+    let validUser: any = null;
 
+    // 1. Check Customer
     const customer = await prisma.customer.findUnique({ where: { email } });
-    if (customer) {
-      user = { ...customer, role: 'customer' };
-    } else {
+    if (customer && await bcrypt.compare(password, customer.password)) {
+      validUser = { ...customer, role: 'customer' };
+    }
+
+    // 2. Check Seller (if customer check failed)
+    if (!validUser) {
       const seller = await prisma.seller.findUnique({ where: { businessEmail: email } });
-      if (seller) {
-        user = { ...seller, role: 'seller' };
-      } else {
-        if( email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD){
-          user = {role: 'admin', email}
-        }
+      if (seller && await bcrypt.compare(password, seller.password)) {
+        validUser = { ...seller, role: 'seller' };
       }
     }
 
-    if (!user) {
-      console.log("User not found");
-      return res.status(401).json({ message: "User not found." });
+    // 3. Check Charity (if seller check failed)
+    if (!validUser) {
+      const charity = await prisma.charity.findUnique({ where: { email } });
+      if (charity && await bcrypt.compare(password, charity.password)) {
+        validUser = { ...charity, role: 'charity' };
+      }
     }
 
-    // Handle password field difference
-    let isMatch = true;
-    if (user.role === "customer") {
-      isMatch = await bcrypt.compare(password, user.password);
-    } else if (user.role === "seller") {
-      isMatch = await bcrypt.compare(password, user.password);
+    // 4. Check Admin
+    if (!validUser) {
+      if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+        validUser = { role: 'admin', email };
+      }
     }
 
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid Credentials" });
+    if (!validUser) {
+      console.log("Login failed: Invalid Credentials or User not found for email:", email);
+      return res.status(401).json({ message: "Invalid Credentials or User not found." });
     }
+
+    let user = validUser;
+    
+    console.log("Login: Successfully authenticated as role:", user.role);
 
     const token = jwt.sign(
       {
-        id: user.role === 'customer' ? user.id : user.role === 'seller' ? user.seller_id : 'admin',
+        id: user.role === 'customer' ? user.id : user.role === 'seller' ? user.seller_id : user.role === 'charity' ? user.id : 'admin',
         role: user.role,
-        email: user.email,
+        email: user.role === 'seller' ? user.businessEmail : user.email,
       },
       process.env.JWT_SECRET as string,
       { expiresIn: "1h" }
