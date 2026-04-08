@@ -243,12 +243,14 @@ model ChatRoom{
   createdAt DateTime @default(now())
 
   //foreign keys
-  customerId Int //customer that related to specific chatroom
-  sellerId Int   //seller that related to specific chatroom
+  customerId Int? // Make optional
+  sellerId Int   
+  charityId Int?  // Add charityId
 
   //relations
-  customer Customer @relation(fields: [customerId],references: [id])
+  customer Customer? @relation(fields: [customerId],references: [id])
   seller Seller @relation(fields: [sellerId],references: [seller_id])
+  charity Charity? @relation(fields: [charityId], references: [id])
 
   message Message[]
 }
@@ -390,9 +392,21 @@ model Admin {
   statusHistory      ComplaintStatusHistory[]
 }
 
+model Charity {
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String   @unique
+  location    String
+  description String?
+  password    String
+  charityProfileImg String?
+  createdAt   DateTime @default(now())
+  
+  //relations
+  chatroom ChatRoom[]
+}
+
 // Add to your existing Prisma schema:
-
-
 
 model Report {
   reportId Int @id @default(autoincrement())
@@ -610,6 +624,7 @@ enum PaymentMethod{
 enum SenderType{
   customer
   seller
+  charity
 }
 
 enum CategoryStatus{

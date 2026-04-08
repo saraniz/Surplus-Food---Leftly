@@ -24,7 +24,7 @@ interface ReviewState{
 
 export const useReviewStore = create<ReviewState>((set,get) => ({
     review: [],
-    token: localStorage.getItem("token"),
+    token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
     loading:false,
     error:null,
 

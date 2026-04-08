@@ -52,7 +52,7 @@ export function SellerMessages() {
         
         // Determine if there are unread messages
         // You might want to track read status in your Message model
-        const hasUnread = latestMessage ? !latestMessage.read : false
+        const hasUnread = latestMessage ? !(latestMessage as any).read : false
         
         // Get seller info
         const sellerName = room.seller?.businessName || "Seller"

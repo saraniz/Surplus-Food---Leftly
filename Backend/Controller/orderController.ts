@@ -92,12 +92,13 @@ export const placeOrder = async (req: Request, res: Response) => {
           console.log("🎁 Processing mystery box order:", item.productId);
           
           // 1. Find the mystery box
+          const actualBoxId = item.productId >= 100000 ? item.productId - 100000 : item.productId;
           const mysteryBox = await tx.mysteryBox.findUnique({
-            where: { id: item.productId },
+            where: { id: actualBoxId },
           });
           
           if (!mysteryBox) {
-            throw new Error(`Mystery Box ${item.productId} not found`);
+            throw new Error(`Mystery Box ${actualBoxId} not found`);
           }
           
           // 2. Check stock
@@ -105,30 +106,20 @@ export const placeOrder = async (req: Request, res: Response) => {
             throw new Error(`${mysteryBox.name} is out of stock`);
           }
           
-          // 3. Create order item for mystery box
-          await tx.orderItem.create({
-            data: {
-              orderId: createdOrder.order_id,
-              sellerId: mysteryBox.sellerId, // Use mystery box's seller ID
-              productId: item.productId,
-              quantity: item.quantity,
-              totalPrice: parseFloat((item.price * item.quantity).toFixed(2)),
-              itemType: "MYSTERY_BOX", // Add a field to identify mystery box items
-            },
-          });
-          
-          // 4. Update mystery box stock and sales
+          // 3. Update mystery box stock and sales
           await tx.mysteryBox.update({
-            where: { id: item.productId },
+            where: { id: actualBoxId },
             data: {
               stock: { decrement: item.quantity },
               sales: { increment: item.quantity },
             },
           });
           
-          // 5. Parse productDetails JSON and reduce stock of individual products
+          // 4. Parse productDetails JSON, reduce stock, and create OrderItems for the contents
           try {
             const productDetails = JSON.parse(mysteryBox.productDetails);
+            const totalItems = productDetails.reduce((sum: number, p: any) => sum + p.quantity, 0);
+            const pricePerItem = parseFloat((item.price * item.quantity / totalItems).toFixed(2));
             
             for (const productDetail of productDetails) {
               const product = await tx.product.findUnique({
@@ -147,16 +138,29 @@ export const placeOrder = async (req: Request, res: Response) => {
                   where: { product_id: productDetail.productId },
                   data: {
                     stock: { decrement: quantityToReduce },
+                    sales: { increment: quantityToReduce }
+                  },
+                });
+
+                // Create order item for the contained product (revealing it)
+                await tx.orderItem.create({
+                  data: {
+                    orderId: createdOrder.order_id,
+                    sellerId: mysteryBox.sellerId,
+                    productId: productDetail.productId,
+                    quantity: quantityToReduce,
+                    totalPrice: pricePerItem * (productDetail.quantity * item.quantity),
+                    itemType: "MYSTERY_BOX",
                   },
                 });
               }
             }
           } catch (parseError) {
             console.error("Error parsing mystery box product details:", parseError);
-            // Continue even if parsing fails - mystery box should still be sold
+            throw new Error(`Failed to process mystery box contents.`);
           }
           
-          console.log("✅ Mystery box processed:", item.productId);
+          console.log("✅ Mystery box processed:", actualBoxId);
         } else {
           // ==============================================
           // PROCESS REGULAR PRODUCT ORDER
@@ -202,6 +206,9 @@ export const placeOrder = async (req: Request, res: Response) => {
       }
 
       return { ...createdOrder, guestSessionId };
+    }, {
+      maxWait: 10000, // 10 seconds to wait for a connection
+      timeout: 20000, // 20 seconds for the entire transaction
     });
 
     console.log("🎉 Order placed successfully:", order.order_id);

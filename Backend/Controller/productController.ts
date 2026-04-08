@@ -626,18 +626,17 @@ export const addMysteryBox = async (req: Request, res: Response) => {
       data: {
         name,
         description,
-        price: parseFloat(price),
-        discountPrice: discountPrice ? parseFloat(discountPrice) : null,
+        price: Math.round(parseFloat(price) || 0),
+        discountPrice: discountPrice ? Math.round(parseFloat(discountPrice)) : null,
         category,
         status: "ACTIVE",
-        stock: parseInt(stock),
+        stock: parseInt(stock) || 0,
         sales: 0,
         productDetails: productDetails,
-        totalValue: totalValue ? parseFloat(totalValue) : calculatedTotalValue,
+        totalValue: totalValue ? Math.round(parseFloat(totalValue)) : Math.round(calculatedTotalValue),
         sellerId: sellerId,
-        // Add these fields - IMPORTANT: Check your Prisma schema for exact field name
-        expireDate: expiryDate ? new Date(expiryDate) : null, // Might be expireDate or expiryDate
-        manufactureDate: manufactureDate ? new Date(manufactureDate) : null,
+        expireDate: expiryDate ? new Date(expiryDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        manufactureDate: manufactureDate ? new Date(manufactureDate) : new Date(),
       },
     });
 

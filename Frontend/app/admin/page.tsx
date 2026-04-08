@@ -361,9 +361,9 @@ export default function AdminDashboardPage() {
                   topSellers.map((seller, index) => (
                     <div key={seller.seller_id} className="flex items-center p-3 hover:bg-gray-50 rounded-lg transition-colors">
                       <div className="w-12 h-12 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg flex items-center justify-center mr-4">
-                        {seller.storeImg ? (
+                        {(seller as any).storeImg ? (
                           <img 
-                            src={seller.storeImg} 
+                            src={(seller as any).storeImg} 
                             alt={seller.businessName}
                             className="w-full h-full object-cover rounded-lg"
                           />

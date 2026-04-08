@@ -16,20 +16,20 @@ export default function Navbar2() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [effectiveRole, setEffectiveRole] = useState<string | null>(null);
   const [isValidToken, setIsValidToken] = useState<boolean>(false);
-  
+
   const pathname = usePathname();
-  const { customer, seller, token, logout, fetchCusDetails, fetchSellerDetails } = useCusAuthStore();
+  const { customer, seller, charity, token, logout, fetchCusDetails, fetchSellerDetails, fetchCharityDetails } = useCusAuthStore();
   const { cart, fetchCart } = useCartState();
-  
+
   // Navigation items
   const navItems = [
     { name: "Home", path: "/", icon: null },
     { name: "Meals", path: "/homepage", icon: null },
-    { name: "Mystery", path: "/mystery", icon: null },
+    { name: "Mystery Boxes", path: "/mysteryboxes", icon: null },
     { name: "About", path: "/aboutus", icon: null },
     { name: "Contact", path: "/contact", icon: null },
   ];
-  
+
   // Check if a nav item is active
   const isActive = (path: string) => {
     if (path === "/") {
@@ -37,49 +37,59 @@ export default function Navbar2() {
     }
     return pathname.startsWith(path);
   };
-  
+
   // Helper function to validate and decode token
   const validateAndDecodeToken = () => {
     if (typeof window === 'undefined') return { isValid: false, role: null, isExpired: false };
-    
+
     const storedToken = localStorage.getItem("token");
-    
+    const storedRole = localStorage.getItem("role");
+
     if (!storedToken) {
       return { isValid: false, role: null, isExpired: false };
     }
-    
+
     try {
-      const payload = JSON.parse(atob(storedToken.split('.')[1]));
-      const isExpired = Date.now() >= payload.exp * 1000;
-      const role = payload.role;
-      
+      const tokenParts = storedToken.split('.');
+
+      if (tokenParts.length < 2) {
+        return { isValid: true, role: storedRole, isExpired: false };
+      }
+
+      // Support base64url payloads and fallback role from localStorage.
+      const base64Payload = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const paddedPayload = base64Payload.padEnd(Math.ceil(base64Payload.length / 4) * 4, '=');
+      const payload = JSON.parse(atob(paddedPayload));
+      const isExpired = payload.exp ? Date.now() >= payload.exp * 1000 : false;
+      const role = payload.role || storedRole;
+
       if (isExpired) {
         return { isValid: false, role: null, isExpired: true };
       }
-      
-      return { 
-        isValid: true, 
-        role, 
+
+      return {
+        isValid: true,
+        role,
         isExpired: false,
-        payload 
+        payload
       };
     } catch (error) {
-      return { isValid: false, role: null, isExpired: false };
+      return { isValid: true, role: storedRole, isExpired: false };
     }
   };
-  
+
   useEffect(() => {
     setIsMounted(true);
-    
+
     // First, validate the token
     const tokenValidation = validateAndDecodeToken();
     setIsValidToken(tokenValidation.isValid);
     setEffectiveRole(tokenValidation.role);
-    
+
     // Check if we should fetch user data
     if (tokenValidation.isValid && tokenValidation.role) {
       console.log("Valid token found, role:", tokenValidation.role);
-      
+
       if (tokenValidation.role === "customer" && !customer) {
         console.log("Fetching customer details...");
         fetchCusDetails();
@@ -91,21 +101,24 @@ export default function Navbar2() {
         } else {
           console.log("No sellerId available for fetching seller details");
         }
+      } else if (tokenValidation.role === "charity" && !charity) {
+        console.log("Fetching charity details...");
+        fetchCharityDetails();
       }
     } else {
       console.log("No valid token found or token invalid");
     }
-    
+
     // ALWAYS fetch cart (it will handle guest/seller logic internally)
     fetchCart();
-    
+
     // Add scroll effect
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [token, customer, seller, fetchCusDetails, fetchSellerDetails, fetchCart, logout]);
+  }, [token, customer, seller, charity, fetchCusDetails, fetchSellerDetails, fetchCharityDetails, fetchCart, logout]);
 
   // FIXED: More strict check for logged in status
   const isLoggedIn = () => {
@@ -114,13 +127,17 @@ export default function Navbar2() {
       console.log("Token invalid or expired, not logged in");
       return false;
     }
-    
+
     // Check if we have matching user data in Zustand store
     if (effectiveRole === "customer" && customer) {
       return true;
     }
-    
+
     if (effectiveRole === "seller" && seller) {
+      return true;
+    }
+
+    if (effectiveRole === "charity" && charity) {
       return true;
     }
 
@@ -133,21 +150,24 @@ export default function Navbar2() {
   };
 
   const isUserLoggedIn = isLoggedIn();
-  const user = customer || seller;
+  const user = effectiveRole === "customer" ? customer : effectiveRole === "seller" ? seller : charity;
   const cartItemCount = getCartItemCount();
 
   // Get greeting text for the button
   const getGreetingText = () => {
     if (!isUserLoggedIn) return "Sign In";
-    
+
     if (!user) return "Sign In";
-    
+
     if (effectiveRole === "customer") {
       const customerName = (user as any)?.name;
       return customerName ? `${customerName.split(' ')[0]}` : "Account";
     } else if (effectiveRole === "seller") {
       const storeName = (user as any)?.businessName;
       return storeName ? `${storeName}` : "Seller";
+    } else if (effectiveRole === "charity") {
+      const charityName = (user as any)?.name;
+      return charityName ? `${charityName.split(' ')[0]}` : "Charity";
     }
     return "Account";
   };
@@ -155,13 +175,15 @@ export default function Navbar2() {
   // Get user display name for dropdown
   const getUserDisplayName = () => {
     if (!isUserLoggedIn) return "Not logged in";
-    
+
     if (!user) return "Loading...";
-    
+
     if (effectiveRole === "customer") {
       return customer?.name || "Customer";
     } else if (effectiveRole === "seller") {
       return seller?.businessName || "Seller";
+    } else if (effectiveRole === "charity") {
+      return charity?.name || "Charity";
     }
     return "User";
   };
@@ -169,7 +191,7 @@ export default function Navbar2() {
   const handleLogout = () => {
     // Call Zustand logout to clear store state
     logout();
-    
+
     setIsDropdownOpen(false);
     window.location.href = '/';
   };
@@ -196,22 +218,21 @@ export default function Navbar2() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-          isScrolled 
-            ? "bg-white/90 backdrop-blur-xl border-b border-gray-200/50 shadow-sm" 
+        className={`sticky top-0 z-50 w-full transition-all duration-300 ${isScrolled
+            ? "bg-white/90 backdrop-blur-xl border-b border-gray-200/50 shadow-sm"
             : "bg-white/80 backdrop-blur-lg border-b border-gray-100/30"
-        }`}
+          }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            
+
             {/* Logo - Modernized */}
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.05 }}
               className="flex items-center space-x-3 group"
             >
               <div className="relative">
-                <motion.div 
+                <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                   className="absolute inset-0 bg-gradient-to-r from-green-400/20 via-green-500/20 to-yellow-500/20 blur-lg rounded-full"
@@ -231,23 +252,22 @@ export default function Navbar2() {
               {navItems.map((item) => {
                 const active = isActive(item.path);
                 return (
-                  <motion.div 
-                    key={item.name} 
-                    whileHover={{ y: -1 }} 
+                  <motion.div
+                    key={item.name}
+                    whileHover={{ y: -1 }}
                     className="relative group"
                   >
                     <Link
                       href={item.path || "#"}
-                      className={`relative flex items-center py-2 px-4 transition-all duration-200 ${
-                        active
+                      className={`relative flex items-center py-2 px-4 transition-all duration-200 ${active
                           ? "text-gray-900 font-semibold"
                           : "text-gray-600 hover:text-gray-900"
-                      }`}
+                        }`}
                     >
                       <span className={`${lora.className} font-medium text-sm tracking-wide relative z-10`}>
                         {item.name}
                       </span>
-                      
+
                       {/* Active Underline */}
                       {active && (
                         <motion.div
@@ -257,7 +277,7 @@ export default function Navbar2() {
                           transition={{ type: "spring", stiffness: 380, damping: 30 }}
                         />
                       )}
-                      
+
                       {/* Hover Underline Effect */}
                       {!active && (
                         <motion.div
@@ -273,7 +293,7 @@ export default function Navbar2() {
 
             {/* Right Side Actions - Modernized */}
             <div className="flex items-center space-x-3">
-              
+
               {/* Cart - ALWAYS SHOW for everyone (logged in or not) */}
               <Link href="/cart">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -283,7 +303,7 @@ export default function Navbar2() {
                       Cart
                     </span>
                     {cartItemCount > 0 && (
-                      <motion.span 
+                      <motion.span
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs rounded-full font-bold min-w-[18px] h-[18px] flex items-center justify-center shadow-sm"
@@ -308,15 +328,21 @@ export default function Navbar2() {
                     >
                       <div className="relative w-7 h-7 rounded-full bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center overflow-hidden ring-2 ring-white shadow-sm">
                         {effectiveRole === "customer" && customer?.cusProfileImg ? (
-                          <img 
-                            src={customer.cusProfileImg} 
+                          <img
+                            src={customer.cusProfileImg}
                             alt={customer.name}
                             className="w-full h-full rounded-full object-cover"
                           />
                         ) : effectiveRole === "seller" && seller?.storeImg ? (
-                          <img 
-                            src={seller.storeImg} 
+                          <img
+                            src={seller.storeImg}
                             alt={seller.businessName}
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        ) : effectiveRole === "charity" && charity?.charityProfileImg ? (
+                          <img
+                            src={charity.charityProfileImg}
+                            alt={charity.name}
                             className="w-full h-full rounded-full object-cover"
                           />
                         ) : (
@@ -344,7 +370,7 @@ export default function Navbar2() {
                           <span className="inline-block mt-1 px-2.5 py-0.5 text-xs bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-full border border-green-100">
                             {effectiveRole ? effectiveRole.charAt(0).toUpperCase() + effectiveRole.slice(1) : "User"}
                           </span>
-                          
+
                           {/* Show warning for seller trying to use cart */}
                           {effectiveRole === "seller" && (
                             <p className="text-xs text-yellow-600 mt-2">
@@ -352,23 +378,23 @@ export default function Navbar2() {
                             </p>
                           )}
                         </div>
-                        
+
                         <div className="py-2">
-                          <Link 
-                            href={effectiveRole === "customer" ? "/customerdashboard" : "/sellerdashboard"} 
+                          <Link
+                            href={effectiveRole === "customer" ? "/customerdashboard" : effectiveRole === "seller" ? "/sellerdashboard" : "/charitydashboard"}
                             onClick={() => setIsDropdownOpen(false)}
                             className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50/80 transition-colors group"
                           >
                             <div className="mr-3 w-4 h-4 flex items-center justify-center">
                               <User className="w-4 h-4 text-gray-500 group-hover:text-green-600" />
                             </div>
-                            {effectiveRole === "customer" ? "My Profile" : "Dashboard"}
+                            {effectiveRole === "customer" || effectiveRole === "charity" ? "My Profile" : "Dashboard"}
                           </Link>
-                          
+
                           {/* Cart in dropdown for customers and sellers (both use cart) */}
                           {(effectiveRole === "customer" || effectiveRole === "seller") && (
-                            <Link 
-                              href="/cart" 
+                            <Link
+                              href="/cart"
                               onClick={() => setIsDropdownOpen(false)}
                               className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50/80 transition-colors group"
                             >
@@ -381,11 +407,11 @@ export default function Navbar2() {
                               )}
                             </Link>
                           )}
-                          
+
                           {effectiveRole === "customer" && (
                             <>
-                              <Link 
-                                href="/customerdashboard/orderhistory" 
+                              <Link
+                                href="/customerdashboard/orderhistory"
                                 onClick={() => setIsDropdownOpen(false)}
                                 className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50/80 transition-colors group"
                               >
@@ -394,14 +420,14 @@ export default function Navbar2() {
                                 </div>
                                 My Orders
                               </Link>
-                              
+
                             </>
                           )}
-                          
+
                           {effectiveRole === "seller" && (
                             <>
-                              <Link 
-                                href="/sellerdashboard/allproducts" 
+                              <Link
+                                href="/sellerdashboard/allproducts"
                                 onClick={() => setIsDropdownOpen(false)}
                                 className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50/80 transition-colors group"
                               >
@@ -410,8 +436,8 @@ export default function Navbar2() {
                                 </div>
                                 My Products
                               </Link>
-                              <Link 
-                                href="/sellerdashboard/analytics" 
+                              <Link
+                                href="/sellerdashboard/analytics"
                                 onClick={() => setIsDropdownOpen(false)}
                                 className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50/80 transition-colors group"
                               >
@@ -422,10 +448,10 @@ export default function Navbar2() {
                               </Link>
                             </>
                           )}
-                          
-                          
+
+
                         </div>
-                        
+
                         <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50/50 to-white">
                           <button
                             onClick={handleLogout}
@@ -454,7 +480,7 @@ export default function Navbar2() {
                     </Link>
                   </motion.div>
 
-                  <motion.div 
+                  <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="hidden md:block"

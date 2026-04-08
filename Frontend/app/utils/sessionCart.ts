@@ -5,8 +5,7 @@ export interface SessionCartProductInfo {
   discountPrice?: number;
   image?: string;
   description?: string;
-  isMysteryBox?: boolean; // Add this
-
+  isMysteryBox?: boolean;
 }
 
 // One item in the session cart
@@ -21,8 +20,8 @@ export interface SessionCartItem {
   productPrice?: number;
   discountPrice?: number;
   productImage?: string;
-  productDescription?:string
-  isMysteryBox?: boolean; // Add this
+  productDescription?:string;
+  isMysteryBox?: boolean;
 }
 
 
@@ -78,6 +77,7 @@ export const addToSessionCart = (
       discountPrice:
         productInfo?.discountPrice ?? existingItem.discountPrice,
       productImage: productInfo?.image ?? existingItem.productImage,
+      isMysteryBox: productInfo?.isMysteryBox ?? existingItem.isMysteryBox,
     };
   } else {
     // Add new item
@@ -90,6 +90,7 @@ export const addToSessionCart = (
       productPrice: productInfo?.price,
       discountPrice: productInfo?.discountPrice,
       productImage: productInfo?.image,
+      isMysteryBox: productInfo?.isMysteryBox,
     });
   }
 

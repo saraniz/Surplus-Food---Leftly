@@ -22,8 +22,8 @@ export function FollowedShops() {
   useEffect(() => {
     if (followedShops && Array.isArray(followedShops)) {
       // Transform the followed shops data for display
-      const transformedShops = followedShops.map(shop => ({
-        id: shop.seller?.seller_id || shop.id,
+      const transformedShops = followedShops.map((shop: any) => ({
+        id: shop.seller?.seller_id || shop.id || shop.followId,
         name: shop.seller?.businessName || "Unknown Shop",
         avatar: shop.seller?.storeImg || "/placeholder-shop.png",
         category: "Store", // You might want to add category to your seller model

@@ -68,11 +68,17 @@ export default function SellerSidebar({ isOpen = true, onClose }: SellerSidebarP
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
       </svg>
     ),
+    mysterybox: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+    ),
   };
 
   const menuItems = [
     { id: "/sellerdashboard", name: "Dashboard", icon: menuIcons.dashboard, path: "/sellerdashboard" },
     { id: "/sellerdashboard/allproducts", name: "Products", icon: menuIcons.products, path: "/sellerdashboard/allproducts" },
+    { id: "/sellerdashboard/mysteryboxes", name: "Mystery Boxes", icon: menuIcons.mysterybox, path: "/sellerdashboard/mysteryboxes" },
     { id: "/sellerdashboard/messages", name: "Messages", icon: menuIcons.messages, path: "/sellerdashboard/messages" },
     { id: "/sellerdashboard/orders", name: "Orders", icon: menuIcons.orders, path: "/sellerdashboard/orders" },
     { id: "/sellerdashboard/analytics", name: "Analytics", icon: menuIcons.analytics, path: "/sellerdashboard/analytics" },

@@ -40,6 +40,7 @@ export default function Login() {
         if (role === "customer") router.push("/customerdashboard");
         else if (role === "seller") router.push("/sellerdashboard");
         else if (role === "admin") router.push("/admin");
+        else if (role === "charity") router.push("/charitydashboard");
       }, 1500);
     } else {
       // Show error toast

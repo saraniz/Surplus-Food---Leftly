@@ -6,13 +6,13 @@ import { withAccelerate } from "@prisma/extension-accelerate";
 
 //create one prisma instance and make it global
 const globalForPrisma = global as unknown as {
-    prisma : PrismaClient
+    prisma : any
 }
 
 //globalForPrisma exist reuse it, if it is not create new prisma client with the withAccelerate extension attached.
-const prisma = globalForPrisma.prisma || new PrismaClient().$extends(withAccelerate())
+const prisma = globalForPrisma.prisma || (new PrismaClient().$extends(withAccelerate()) as any)
 
 //in production ususally want new prismaclient and for development reuse the global prisma client to avoid too many connections
 if(process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
-export default prisma
+export default prisma as any

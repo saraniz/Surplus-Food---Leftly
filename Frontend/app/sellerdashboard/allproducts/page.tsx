@@ -5,7 +5,6 @@ import SellerSidebar from "../../components/sellerdashboard";
 import SellerHeader from "../../components/sellerHeader";
 import { useProductStore } from "../../ZustandStore/productStore";
 import { usecategoryStore } from "../../ZustandStore/Admin/categoryStore";
-import MysteryBoxManager from "../../components/MysteryBox"; // Import the Mystery Box Manager
 
 interface ProductImage {
   id: number;
@@ -57,7 +56,6 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletedId, setDeletedId] = useState<number | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'products' | 'mystery-boxes'>('products');
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -367,7 +365,7 @@ export default function ProductsPage() {
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           title="Products Management"
-          subtitle="Manage your products and mystery boxes"
+          subtitle="Manage your products"
         />
         
         {/* Toast Notification */}
@@ -420,39 +418,6 @@ export default function ProductsPage() {
         )}
 
         <main className="flex-1 p-6 overflow-y-auto">
-          {/* Tab Navigation */}
-          <div className="mb-6">
-            <div className="flex space-x-2 border-b">
-              <TabButton 
-                active={activeTab === 'products'} 
-                onClick={() => setActiveTab('products')}
-              >
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                  </svg>
-                  <span>Products</span>
-                </div>
-              </TabButton>
-              <TabButton 
-                active={activeTab === 'mystery-boxes'} 
-                onClick={() => setActiveTab('mystery-boxes')}
-              >
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                  </svg>
-                  <span>Mystery Boxes</span>
-                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
-                    New
-                  </span>
-                </div>
-              </TabButton>
-            </div>
-          </div>
-
-          {/* Content based on active tab */}
-          {activeTab === 'products' ? (
             <>
               <div className="flex justify-between items-center mb-6">
                 <div>
@@ -965,10 +930,6 @@ export default function ProductsPage() {
                 </div>
               )}
             </>
-          ) : (
-            /* Mystery Boxes Tab */
-            <MysteryBoxManager />
-          )}
 
         </main>
       </div>

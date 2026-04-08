@@ -13,6 +13,7 @@ const router = express.Router()
 
 // Public routes (no authentication required)
 router.post("/guest/lookup", getGuestOrder);
+router.post("/guest/placeorder", placeOrder);
 
 // Customer routes (authenticated) - Keep existing endpoint names for backward compatibility
 router.post("/placeorder", authenticate, placeOrder);

@@ -3,6 +3,7 @@
 
 import Register from "../components/Register";
 import { useState, useEffect } from "react";
+import { Suspense } from "react";
 import { CheckCircle, XCircle, X } from "lucide-react";
 
 export default function RegisterPage() {
@@ -102,7 +103,9 @@ export default function RegisterPage() {
           {/* Left side - Login Form */}
           <div className="flex items-center justify-center">
             {/* Pass showToast function to Register component */}
-            <Register onShowToast={showToast} />
+            <Suspense fallback={<div className="text-white">Loading...</div>}>
+              <Register onShowToast={showToast} />
+            </Suspense>
           </div>
 
           {/* Right side - Enlarged image */}

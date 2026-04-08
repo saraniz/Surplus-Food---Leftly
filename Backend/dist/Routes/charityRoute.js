@@ -1,0 +1,10 @@
+import express from 'express';
+import { registerCharity, getAllCharities, getCharityDetail, updateCharityProfile } from '../Controller/charityController';
+import authMiddleware from '../Middleware/authMiddleware';
+import { upload } from '../Middleware/uploadMiddleware';
+const router = express.Router();
+router.post("/register", registerCharity);
+router.get("/all", getAllCharities);
+router.get("/getprofile", authMiddleware, getCharityDetail);
+router.post("/updateprofile", authMiddleware, upload.single("charityProfileImg"), updateCharityProfile);
+export default router;
