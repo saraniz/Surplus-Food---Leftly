@@ -21,6 +21,13 @@
 * View order history
 * Chat with sellers and follow favorite sellers
 
+### Charity Organizations
+
+* View and manage charity dashboard details
+* Upload and update charity profile pictures
+* Accept or decline incoming donation requests
+* Chat with sellers through the charity message center
+
 ### Sellers
 
 * Add and manage products
