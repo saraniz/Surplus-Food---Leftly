@@ -20,17 +20,20 @@
 *   **Search & Filter:** Find meals by categories (Fruits, Vegetables, Salads, Beverages, Bakery, etc.).
 *   **Instant Cart:** Add products to the cart and place orders instantly.
 *   **Submit Complaints:** Lodge feedback or complaints without registration.
+*   **Charity Directory:** View all registered charity programs and read their public profile missions.
 
 ### 2. Registered Users (Customers)
 *   **Order Tracking & Spending:** View active orders, history, and monitor expenses.
 *   **Live Chat:** Communicate directly with sellers using real-time instant messaging.
 *   **Follow Sellers:** Save favorite shops to quickly view their latest listings.
+*   **Charity Profiles:** Browse the organizations directory and view individual public profiles of verified charities.
 
 ### 3. Food Sellers (Restaurants & Bakeries)
 *   **Inventory Management:** List surplus food with descriptions, original prices, discount prices, stock counts, and shelf life.
 *   **Interactive Dashboards:** Track sales revenue, top products, and overall environmental impact.
 *   **Mystery Boxes 🎁:** Package multiple surplus items together as surprise boxes for creative sales.
 *   **Customer Communication:** Respond to client messages and reviews directly.
+*   **Charity Coordination:** Browse registered charities to coordinate food donations and track community impact.
 
 ### 4. Admin Portal
 *   **User Directory Management:** Verify sellers, moderate customer accounts.

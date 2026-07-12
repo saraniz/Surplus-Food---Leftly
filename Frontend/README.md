@@ -21,12 +21,14 @@
 * Browse available surplus food
 * Add items to cart and place orders
 * Submit complaints easily without creating an account
+* View all registered charity programs and read their public profile missions
 
 ### Registered Users
 
 * Order food and track spending
 * View order history
 * Chat with sellers and follow favorite sellers
+* Browse verified charity organizations and view their public profiles
 
 ### Sellers
 
@@ -35,6 +37,7 @@
 * Generate reports
 * Communicate with customers in real-time
 * Create **Mystery Boxes 🎁** to sell surplus creatively
+* Browse registered charities to coordinate food donations and track community impact
 
 ### Admin
 
