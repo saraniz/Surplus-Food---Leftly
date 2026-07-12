@@ -7,6 +7,7 @@ import api from "@/app/libs/api";
 import { motion } from "framer-motion";
 import { Search, MapPin, Mail, Heart, Calendar, Building2 } from "lucide-react";
 import { lora } from "@/app/libs/fonts";
+import Link from "next/link";
 
 interface Charity {
   id: number;
@@ -197,6 +198,12 @@ export default function CharityDirectoryPage() {
                         <Calendar className="w-3.5 h-3.5 mr-2 text-gray-400 shrink-0" />
                         <span>Joined {new Date(charity.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
                       </div>
+                      <Link
+                        href={`/charity/${charity.id}`}
+                        className="text-xs font-semibold text-green-600 hover:text-green-700 hover:underline transition-colors shrink-0"
+                      >
+                        View Profile &rarr;
+                      </Link>
                     </div>
                   </div>
                 </motion.div>

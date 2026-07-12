@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerCharity, getAllCharities, getCharityDetail, updateCharityProfile } from '../Controller/charityController';
+import { registerCharity, getAllCharities, getCharityDetail, updateCharityProfile, getCharityDetailPublic } from '../Controller/charityController';
 import authMiddleware from '../Middleware/authMiddleware';
 import { upload } from '../Middleware/uploadMiddleware';
 
@@ -9,5 +9,6 @@ router.post("/register", registerCharity);
 router.get("/all", getAllCharities);
 router.get("/getprofile", authMiddleware, getCharityDetail);
 router.post("/updateprofile", authMiddleware, upload.single("charityProfileImg"), updateCharityProfile);
+router.get("/:id", getCharityDetailPublic);
 
 export default router;

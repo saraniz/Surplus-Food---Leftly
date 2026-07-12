@@ -164,3 +164,50 @@ export const updateCharityProfile = async (req: Request, res: Response) => {
   }
 };
 
+// Get single charity details publicly by ID
+export const getCharityDetailPublic = async (req: Request, res: Response) => {
+  try {
+    const charityId = parseInt(req.params.id);
+
+    if (isNaN(charityId)) {
+      return res.status(400).json({ message: "Invalid charity ID" });
+    }
+
+    const charity = await prisma.charity.findUnique({
+      where: { id: charityId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        location: true,
+        description: true,
+        charityProfileImg: true,
+        createdAt: true,
+      },
+    });
+
+    if (!charity) {
+      return res.status(404).json({ message: "Charity not found" });
+    }
+
+    const host = req.get("host");
+    const protocol = req.protocol;
+
+    let profileImageUrl = null;
+    if (charity.charityProfileImg) {
+      profileImageUrl = `${protocol}://${host}/uploads/${charity.charityProfileImg}`;
+    }
+
+    return res.status(200).json({
+      message: "Charity details fetched successfully.",
+      charity: {
+        ...charity,
+        charityProfileImg: profileImageUrl,
+      },
+    });
+  } catch (error) {
+    console.error("Fetch public charity details error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
