@@ -85,7 +85,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
 
         console.log("Connecting to socket...");
-        const socket = io("http://localhost:2000", {
+        const socket = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000", {
             transports: ["websocket", "polling"],
             reconnection: true,
             reconnectionAttempts: 5,

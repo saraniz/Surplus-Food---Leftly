@@ -93,6 +93,13 @@ export default function ShopPage() {
 
   const handleFollowToggle = async () => {
     if (followLoading) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login first to follow this shop.");
+      router.push("/login");
+      return;
+    }
     
     setFollowLoading(true);
     try {
@@ -119,6 +126,13 @@ export default function ShopPage() {
   const handleGetInTouch = async () => {
     if (!sellerId || isNaN(sellerId)) {
       console.log("❌ No seller ID");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login first to send a message.");
+      router.push("/login");
       return;
     }
 

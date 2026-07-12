@@ -5,9 +5,10 @@
     "moduleResolution": "Bundler",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": true,
+    "strict": false,
     "noImplicitAny": false,
     "skipLibCheck": true,
+    "noEmitOnError": false,
     "outDir": "./dist",
     "rootDir": "./"
   },

@@ -41,9 +41,14 @@ export const useFollowStore = create<FollowState>((set, get) => ({
 
   // Fetch all followed shops
   fetchFollowedShops: async () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      set({ follow: [], loading: false });
+      return;
+    }
+
     try {
       set({ loading: true, error: null });
-      const token = localStorage.getItem("token");
 
       const res = await api.get(
         `/api/follow/getfollowshops`,

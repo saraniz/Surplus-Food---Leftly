@@ -52,7 +52,7 @@ const getBaseUrl = () => {
   
   // Check if we're in development
   if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:2000';
+    return 'http://localhost:5000';
   }
   
   // Production fallback - adjust based on your deployment

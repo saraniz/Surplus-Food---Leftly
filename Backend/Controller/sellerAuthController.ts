@@ -14,6 +14,26 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
+const formatImageUrl = (url: string | null, req: Request): string | null => {
+  if (!url) return null;
+  const currentHost = req.get('host') || 'localhost:5000';
+  const protocol = req.protocol || 'http';
+  
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url.replace(/^https?:\/\/[^\/]+/, `${protocol}://${currentHost}`);
+  }
+  
+  if (url.startsWith('/uploads/')) {
+    return `${protocol}://${currentHost}${url}`;
+  }
+  
+  if (url.startsWith('uploads/')) {
+    return `${protocol}://${currentHost}/${url}`;
+  }
+  
+  return `${protocol}://${currentHost}/uploads/${url}`;
+};
+
 //seller registration
 export const sellerRegister = async (req: Request, res: Response) => {
   try {
@@ -369,7 +389,8 @@ export const getSellerDetailsPublic = async (req: Request, res: Response) => {
       message: "Seller fetched successfully",
       seller: {
         ...seller,
-        // URLs are already in storeImg and coverImg fields
+        storeImg: formatImageUrl(seller.storeImg, req),
+        coverImg: formatImageUrl(seller.coverImg, req),
         followers: followerCount,
         productsCount: productCount,
         following: 0,
@@ -428,7 +449,8 @@ export const getSellerDetails = async (req: Request, res: Response) => {
       message: "Seller fetched successfully",
       seller: {
         ...seller,
-        // storeImg and coverImg are already URLs, return them directly
+        storeImg: formatImageUrl(seller.storeImg, req),
+        coverImg: formatImageUrl(seller.coverImg, req),
         followers: followerCount,
         following: 0, // Set to 0 as requested
         rating: 4.7,
@@ -492,6 +514,8 @@ export const getAllSellers = async (req: Request, res: Response) => {
 
         return {
           ...seller,
+          storeImg: formatImageUrl(seller.storeImg, req),
+          coverImg: formatImageUrl(seller.coverImg, req),
           followers: followerCount,
           productsCount: productCount,
           following: 0, // Default value
@@ -571,6 +595,8 @@ export const getMySellerDetails = async (req: AuthenticatedRequest, res: Respons
       message: "Seller details fetched successfully",
       seller: {
         ...seller,
+        storeImg: formatImageUrl(seller.storeImg, req),
+        coverImg: formatImageUrl(seller.coverImg, req),
         followers: followerCount,
         productsCount: productCount,
         following: 0,
