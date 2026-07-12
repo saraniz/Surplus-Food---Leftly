@@ -52,11 +52,26 @@ export const getAllCharities = async (req: Request, res: Response) => {
         email: true,
         location: true,
         description: true,
+        charityProfileImg: true,
         createdAt: true,
       },
     });
 
-    return res.status(200).json({ charities });
+    const host = req.get("host");
+    const protocol = req.protocol;
+
+    const formattedCharities = charities.map((charity) => {
+      let profileImageUrl = null;
+      if (charity.charityProfileImg) {
+        profileImageUrl = `${protocol}://${host}/uploads/${charity.charityProfileImg}`;
+      }
+      return {
+        ...charity,
+        charityProfileImg: profileImageUrl,
+      };
+    });
+
+    return res.status(200).json({ charities: formattedCharities });
   } catch (error) {
     console.error("Fetch charities error:", error);
     return res.status(500).json({ message: "Server Error" });

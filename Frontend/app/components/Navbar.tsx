@@ -48,6 +48,7 @@ export default function Navbar() {
                 { name: "Home",path:"/", active: true },
                 { name: "Restaurants", path:"/homepage"},
                 { name: "How It Works",path:"/howitworks" },
+                { name: "Charities", path:"/charities" },
                 { name: "About Us",path:"/aboutus" },
                 { name: "Contact",path:"/contactus" },
               ].map((item) => (
@@ -140,14 +141,21 @@ export default function Navbar() {
           className="lg:hidden overflow-hidden bg-[#437057]/95 backdrop-blur-lg border-t border-white/10"
         >
           <div className="px-6 py-4 space-y-4">
-            {["Home", "Restaurants", "How It Works", "About Us", "Contact"].map((item) => (
+            {[
+              { name: "Home", path: "/" },
+              { name: "Restaurants", path: "/homepage" },
+              { name: "How It Works", path: "/howitworks" },
+              { name: "Charities", path: "/charities" },
+              { name: "About Us", path: "/aboutus" },
+              { name: "Contact", path: "/contactus" }
+            ].map((item) => (
               <Link
-                key={item}
-                href="#"
+                key={item.name}
+                href={item.path}
                 className="block px-4 py-3 rounded-lg text-white hover:bg-white/10 transition-colors duration-300"
                 onClick={() => setIsMenuOpen(false)}
               >
-                <span className={`${lora.className} font-medium`}>{item}</span>
+                <span className={`${lora.className} font-medium`}>{item.name}</span>
               </Link>
             ))}
             <div className="pt-4 space-y-3 border-t border-white/10">

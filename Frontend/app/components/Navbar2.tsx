@@ -26,6 +26,7 @@ export default function Navbar2() {
     { name: "Home", path: "/", icon: null },
     { name: "Meals", path: "/homepage", icon: null },
     { name: "Mystery Boxes", path: "/mysteryboxes", icon: null },
+    { name: "Charities", path: "/charities", icon: null },
     { name: "About", path: "/aboutus", icon: null },
     { name: "Contact", path: "/contact", icon: null },
   ];
