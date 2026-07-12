@@ -11,18 +11,7 @@
 
 ---
 
-## 📸 App Interface
 
-### Home Landing Page
-<img src="Frontend/public/home.png" width="100%" alt="Leftly Landing Page" />
-
-### Category Selection & Meals Search
-<img src="Frontend/public/foodh.png" width="100%" alt="Leftly Meals Search" />
-
-### Recommended Products & Discounts
-<img src="Frontend/public/trusted.png" width="100%" alt="Leftly Discounted Products" />
-
----
 
 ## 🌟 Core Features
 
@@ -90,12 +79,7 @@
    ```bash
    npm install
    ```
-3. Configure environment variables in `.env`:
-   ```env
-   DATABASE_URL="postgresql://neondb_owner:YOUR_KEY@YOUR_HOST/neondb?sslmode=require"
-   JWT_SECRET="leftly_secret_key"
-   PORT=5000
-   ```
+3. Configure your database connection and server environment variables in a local `.env` file (refer to the backend configurations).
 4. Generate Prisma client:
    ```bash
    npx prisma generate
@@ -115,11 +99,7 @@
    ```bash
    npm install
    ```
-3. Configure API endpoints in `.env.local`:
-   ```env
-   NEXT_PUBLIC_API_URL="http://localhost:5000"
-   NEXT_PUBLIC_API_BASE_URL="http://localhost:5000"
-   ```
+3. Configure your backend API connection URLs in a local `.env.local` file.
 4. Run the development server:
    ```bash
    npm run dev
