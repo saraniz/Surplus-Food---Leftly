@@ -7,6 +7,13 @@
 
 ---
 
+## Live Deployments 🌐
+
+*   **Frontend Web App (Next.js):** [https://surplus-food-leftly.vercel.app](https://surplus-food-leftly.vercel.app)
+*   **Backend API Server (Express/Prisma):** [https://surplus-food-leftly-production.up.railway.app](https://surplus-food-leftly-production.up.railway.app)
+
+---
+
 ## Features
 
 ### Non-Registered Users
